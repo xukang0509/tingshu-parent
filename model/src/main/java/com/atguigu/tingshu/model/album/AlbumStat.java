@@ -11,18 +11,18 @@ import lombok.Data;
 @TableName("album_stat")
 public class AlbumStat extends BaseEntity {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	@Schema(description = "专辑id")
-	@TableField("album_id")
-	private Long albumId;
+    @Schema(description = "专辑id")
+    @TableField("album_id")
+    private Long albumId;
 
-	@Schema(description = "统计类型")
-	@TableField("stat_type")
-	private String statType;
+    @Schema(description = "统计类型")
+    @TableField("stat_type")
+    private String statType;
 
-	@Schema(description = "统计数目")
-	@TableField("stat_num")
-	private Integer statNum;
+    @Schema(description = "统计数目")
+    @TableField("stat_num")
+    private Integer statNum;
 
 }

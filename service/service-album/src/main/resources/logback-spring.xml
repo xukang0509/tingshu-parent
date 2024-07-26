@@ -4,7 +4,7 @@
     <contextName>logback</contextName>
 
     <!-- 日志的输出目录 -->
-    <property name="log.path" value="D://work//tingshu_work//logs" />
+    <property name="log.path" value="D://java_code//project//glsx//tingshu-parent//log"/>
 
     <!--控制台日志格式：彩色日志-->
     <!-- magenta:洋红 -->
@@ -17,10 +17,10 @@
 
     <!--文件日志格式-->
     <property name="FILE_LOG_PATTERN"
-              value="%date{yyyy-MM-dd HH:mm:ss} [%-5level] %thread %file:%line %logger %msg%n" />
+              value="%date{yyyy-MM-dd HH:mm:ss} [%-5level] %thread %file:%line %logger %msg%n"/>
 
     <!--编码-->
-    <property name="ENCODING" value="UTF-8" />
+    <property name="ENCODING" value="UTF-8"/>
 
     <!-- 控制台日志 -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
@@ -45,20 +45,20 @@
     </appender>
 
     <!-- logstash日志 -->
-<!--    <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">-->
-<!--        &lt;!&ndash; logstash ip和暴露的端口，logback就是通过这个地址把日志发送给logstash &ndash;&gt;-->
-<!--        <destination>139.198.127.41:8044</destination>-->
-<!--        <encoder charset="UTF-8" class="net.logstash.logback.encoder.LogstashEncoder" />-->
-<!--    </appender>-->
+    <!--    <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">-->
+    <!--        &lt;!&ndash; logstash ip和暴露的端口，logback就是通过这个地址把日志发送给logstash &ndash;&gt;-->
+    <!--        <destination>139.198.127.41:8044</destination>-->
+    <!--        <encoder charset="UTF-8" class="net.logstash.logback.encoder.LogstashEncoder" />-->
+    <!--    </appender>-->
 
     <!-- 开发环境 -->
     <springProfile name="dev">
         <!-- com.atguigu日志记录器：业务程序INFO级别  -->
-        <logger name="com.atguigu" level="INFO" />
+        <logger name="com.atguigu" level="INFO"/>
         <!-- 根日志记录器：INFO级别  -->
         <root level="INFO">
-            <appender-ref ref="CONSOLE" />
-<!--            <appender-ref ref="FILE" />-->
+            <appender-ref ref="CONSOLE"/>
+            <!--            <appender-ref ref="FILE" />-->
         </root>
     </springProfile>
 
