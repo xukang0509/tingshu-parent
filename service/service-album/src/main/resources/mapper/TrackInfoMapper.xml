@@ -2,8 +2,36 @@
 <!DOCTYPE mapper
         PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-
-
 <mapper namespace="com.atguigu.tingshu.album.mapper.TrackInfoMapper">
+    <select id="findUserTrackPage" resultType="com.atguigu.tingshu.vo.album.TrackListVo">
+        SELECT t.album_id,
+        a.album_title,
+        stat.track_id,
+        t.track_title,
+        t.cover_url,
+        t.media_duration,
+        t.`status`,
+        SUM(IF(stat.stat_type = '0701', stat.stat_num, 0)) playStatNum,
+        SUM(IF(stat.stat_type = '0702', stat.stat_num, 0)) collectStatNum,
+        SUM(IF(stat.stat_type = '0703', stat.stat_num, 0)) praiseStatNum,
+        SUM(IF(stat.stat_type = '0704', stat.stat_num, 0)) commentStatNum
+        FROM track_info t
+        LEFT JOIN track_stat stat ON t.id = stat.track_id AND stat.is_deleted = 0
+        LEFT JOIN album_info a ON t.album_id = a.id AND a.is_deleted = 0
+        <where>
+            t.is_deleted = 0
+            <if test="query.trackTitle != null and query.trackTitle != ''">
+                and t.track_title like concat('%',#{query.trackTitle},'%')
+            </if>
+            <if test="query.status != null and query.status != ''">
+                and t.`status` = #{query.status}
+            </if>
+            <if test="query.userId != null">
+                and t.user_id = #{query.userId}
+            </if>
+        </where>
+        GROUP BY t.id
+        ORDER BY t.id DESC
+    </select>
 </mapper>
 

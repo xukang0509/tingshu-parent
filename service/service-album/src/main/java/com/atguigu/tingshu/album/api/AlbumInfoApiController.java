@@ -14,6 +14,8 @@ import jakarta.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @Tag(name = "专辑管理")
 @RestController
 @RequestMapping("api/album/albumInfo")
@@ -65,6 +67,13 @@ public class AlbumInfoApiController {
     public Result<Void> updateAlbumInfo(@RequestBody @Validated AlbumInfoVo albumInfoVo, @PathVariable Long albumId) {
         this.albumInfoService.updateAlbumInfo(albumInfoVo, albumId);
         return Result.ok();
+    }
+
+    // http://localhost:8500/api/album/albumInfo/findUserAllAlbumList
+    @Operation(summary = "查看当前用户的专辑列表")
+    @GetMapping("findUserAllAlbumList")
+    public Result<List<AlbumInfo>> findUserAllAlbumList() {
+        return Result.ok(this.albumInfoService.findUserAllAlbumList());
     }
 }
 

@@ -127,8 +127,6 @@ public class AlbumInfoServiceImpl extends ServiceImpl<AlbumInfoMapper, AlbumInfo
         // 1.更新专辑信息AlbumInfo
         if (SystemConstant.ALBUM_PAY_TYPE_FREE.equals(albumInfo.getPayType())) {
             albumInfo.setPrice(new BigDecimal("0.00"));
-            albumInfo.setDiscount(new BigDecimal("-1.0"));
-            albumInfo.setVipDiscount(new BigDecimal("-1.0"));
         }
         this.albumInfoMapper.updateById(albumInfo);
         // 2.删除专辑属性值关联信息
@@ -146,5 +144,18 @@ public class AlbumInfoServiceImpl extends ServiceImpl<AlbumInfoMapper, AlbumInfo
                 this.albumAttributeValueMapper.insert(albumAttributeValue);
             }
         }
+    }
+
+    @Override
+    public List<AlbumInfo> findUserAllAlbumList() {
+        //	查询数据：为了能查询到数据，如果userId为null则根据userId=1查询用户
+        Long userId = AuthContextHolder.getUserId() == null ? 1L : AuthContextHolder.getUserId();
+        return this.albumInfoMapper.selectList(Wrappers.lambdaQuery(AlbumInfo.class)
+                .eq(AlbumInfo::getUserId, userId)
+                .eq(AlbumInfo::getIsDeleted, 0)
+                // 查询专辑id、标题即可
+                .select(AlbumInfo::getId, AlbumInfo::getAlbumTitle)
+                // 由于id是递增的，故id越大就是越接近添加的专辑，故降序排列
+                .orderByDesc(AlbumInfo::getId));
     }
 }
