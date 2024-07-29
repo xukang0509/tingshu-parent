@@ -12,7 +12,6 @@ import com.tencentcloudapi.common.Credential;
 import com.tencentcloudapi.common.exception.TencentCloudSDKException;
 import com.tencentcloudapi.vod.v20180717.VodClient;
 import com.tencentcloudapi.vod.v20180717.models.*;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
@@ -26,7 +25,6 @@ public class VodServiceImpl implements VodService {
     @Autowired
     private VodConstantProperties vodConstantProperties;
 
-    @SneakyThrows
     @Override
     public VodFileUploadVo uploadTrack(MultipartFile file) {
         // 把上传的媒体文件，保存到临时路径下

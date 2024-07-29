@@ -4,6 +4,7 @@ import com.atguigu.tingshu.album.mapper.AlbumAttributeValueMapper;
 import com.atguigu.tingshu.album.mapper.AlbumInfoMapper;
 import com.atguigu.tingshu.album.mapper.AlbumStatMapper;
 import com.atguigu.tingshu.album.service.AlbumInfoService;
+import com.atguigu.tingshu.album.service.MinioService;
 import com.atguigu.tingshu.common.constant.SystemConstant;
 import com.atguigu.tingshu.common.util.AuthContextHolder;
 import com.atguigu.tingshu.model.album.AlbumAttributeValue;
@@ -41,6 +42,9 @@ public class AlbumInfoServiceImpl extends ServiceImpl<AlbumInfoMapper, AlbumInfo
     @Resource
     private AlbumStatMapper albumStatMapper;
 
+    @Resource
+    private MinioService minioService;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void saveAlbumInfo(AlbumInfoVo albumInfoVo) {
@@ -50,7 +54,7 @@ public class AlbumInfoServiceImpl extends ServiceImpl<AlbumInfoMapper, AlbumInfo
         // 1.保存专辑信息AlbumInfo
         // 获取userId，这里没有实现登录，先设置为1L，等之后完成登录后，再获取userId
         Long userId = AuthContextHolder.getUserId();
-        albumInfo.setUserId(userId == null ? 1L : userId);
+        albumInfo.setUserId(userId);
         // 审核通过
         albumInfo.setStatus(SystemConstant.ALBUM_STATUS_PASS);
         // 如果是付费专辑：设置前五集为免费试听；每集前30s免费试听
@@ -89,7 +93,7 @@ public class AlbumInfoServiceImpl extends ServiceImpl<AlbumInfoMapper, AlbumInfo
     public Page<AlbumListVo> findUserAlbumPage(Integer pageNum, Integer pageSize, AlbumInfoQuery albumInfoQuery) {
         // 设置主播的id
         Long userId = AuthContextHolder.getUserId();
-        albumInfoQuery.setUserId(userId == null ? 1L : userId);
+        albumInfoQuery.setUserId(userId);
         Page<AlbumListVo> albumListVoPage = new Page<>(pageNum, pageSize);
         return this.albumInfoMapper.selectUserAlbumPage(albumListVoPage, albumInfoQuery);
     }
@@ -97,6 +101,12 @@ public class AlbumInfoServiceImpl extends ServiceImpl<AlbumInfoMapper, AlbumInfo
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void removeAlbumInfoById(Long albumId) {
+        AlbumInfo albumInfo = this.albumInfoMapper.selectOne(Wrappers.lambdaQuery(AlbumInfo.class)
+                .eq(AlbumInfo::getId, albumId)
+                .select(AlbumInfo::getCoverUrl)
+                .last("limit 1"));
+        // 0.删除minio中的图片
+        minioService.deleteFile(albumInfo.getCoverUrl());
         // 1.删除专辑
         this.albumInfoMapper.deleteById(albumId);
         // 2.删除专辑属性值
@@ -123,6 +133,7 @@ public class AlbumInfoServiceImpl extends ServiceImpl<AlbumInfoMapper, AlbumInfo
     public void updateAlbumInfo(AlbumInfoVo albumInfoVo, Long albumId) {
         // 0.拷贝专辑信息
         AlbumInfo albumInfo = this.getById(albumId);
+        String coverUrl = albumInfo.getCoverUrl();
         BeanUtils.copyProperties(albumInfoVo, albumInfo);
         // 1.更新专辑信息AlbumInfo
         if (SystemConstant.ALBUM_PAY_TYPE_FREE.equals(albumInfo.getPayType())) {
@@ -144,12 +155,16 @@ public class AlbumInfoServiceImpl extends ServiceImpl<AlbumInfoMapper, AlbumInfo
                 this.albumAttributeValueMapper.insert(albumAttributeValue);
             }
         }
+        // 4.判断是否删除minio服务中的旧图片
+        if (!Objects.equals(coverUrl, albumInfo.getCoverUrl())) {
+            minioService.deleteFile(coverUrl);
+        }
     }
 
     @Override
     public List<AlbumInfo> findUserAllAlbumList() {
         //	查询数据：为了能查询到数据，如果userId为null则根据userId=1查询用户
-        Long userId = AuthContextHolder.getUserId() == null ? 1L : AuthContextHolder.getUserId();
+        Long userId = AuthContextHolder.getUserId();
         return this.albumInfoMapper.selectList(Wrappers.lambdaQuery(AlbumInfo.class)
                 .eq(AlbumInfo::getUserId, userId)
                 .eq(AlbumInfo::getIsDeleted, 0)

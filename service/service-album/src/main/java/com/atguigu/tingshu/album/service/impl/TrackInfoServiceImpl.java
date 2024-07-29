@@ -3,6 +3,7 @@ package com.atguigu.tingshu.album.service.impl;
 import com.atguigu.tingshu.album.mapper.AlbumInfoMapper;
 import com.atguigu.tingshu.album.mapper.TrackInfoMapper;
 import com.atguigu.tingshu.album.mapper.TrackStatMapper;
+import com.atguigu.tingshu.album.service.MinioService;
 import com.atguigu.tingshu.album.service.TrackInfoService;
 import com.atguigu.tingshu.album.service.VodService;
 import com.atguigu.tingshu.common.constant.SystemConstant;
@@ -45,10 +46,13 @@ public class TrackInfoServiceImpl extends ServiceImpl<TrackInfoMapper, TrackInfo
     @Resource
     private VodService vodService;
 
+    @Resource
+    private MinioService minioService;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void saveTrackInfo(TrackInfoVo trackInfoVo) {
-        Long userId = AuthContextHolder.getUserId() == null ? 1 : AuthContextHolder.getUserId();
+        Long userId = AuthContextHolder.getUserId();
         // 1.根据文件id查询腾讯云中的文件信息
         TrackMediaInfoVo mediaInfoVo = vodService.getMediaInfo(trackInfoVo.getMediaFileId());
         // 2.新增声音信息
@@ -98,7 +102,7 @@ public class TrackInfoServiceImpl extends ServiceImpl<TrackInfoMapper, TrackInfo
     public Page<TrackListVo> findUserTrackPage(Integer pageNum, Integer pageSize, TrackInfoQuery trackInfoQuery) {
         // 设置主播的id
         Long userId = AuthContextHolder.getUserId();
-        trackInfoQuery.setUserId(userId == null ? 1L : userId);
+        trackInfoQuery.setUserId(userId);
         Page<TrackListVo> page = new Page<>(pageNum, pageSize);
         return this.trackInfoMapper.findUserTrackPage(page, trackInfoQuery);
     }
@@ -109,7 +113,9 @@ public class TrackInfoServiceImpl extends ServiceImpl<TrackInfoMapper, TrackInfo
         // 先根据主键获取声音，拷贝数据
         TrackInfo trackInfo = this.getById(trackId);
         String mediaFileId = trackInfo.getMediaFileId();
+        String coverUrl = trackInfo.getCoverUrl();
         BeanUtils.copyProperties(trackInfoVo, trackInfo);
+        // 判断是否更新媒体信息及删除旧媒体信息
         if (!Objects.equals(mediaFileId, trackInfoVo.getMediaFileId())) {
             // 根据文件id查询腾讯云中的文件信息
             TrackMediaInfoVo mediaInfoVo = vodService.getMediaInfo(trackInfoVo.getMediaFileId());
@@ -123,6 +129,10 @@ public class TrackInfoServiceImpl extends ServiceImpl<TrackInfoMapper, TrackInfo
             // 删除旧音频信息
             this.vodService.removeTrackMedia(mediaFileId);
         }
+        // 判断是否删除minio服务中的旧图片
+        if (!Objects.equals(coverUrl, trackInfo.getCoverUrl())) {
+            minioService.deleteFile(coverUrl);
+        }
         this.updateById(trackInfo);
     }
 
@@ -131,7 +141,7 @@ public class TrackInfoServiceImpl extends ServiceImpl<TrackInfoMapper, TrackInfo
     public void removeTrackInfo(Long trackId) {
         TrackInfo trackInfo = this.trackInfoMapper.selectOne(Wrappers.lambdaQuery(TrackInfo.class)
                 .eq(TrackInfo::getId, trackId)
-                .select(TrackInfo::getAlbumId, TrackInfo::getMediaFileId)
+                .select(TrackInfo::getAlbumId, TrackInfo::getMediaFileId, TrackInfo::getCoverUrl)
                 .last(" limit 1"));
         if (Objects.isNull(trackInfo)) {
             throw new GuiguException(ResultCodeEnum.DATA_ERROR);
@@ -152,5 +162,7 @@ public class TrackInfoServiceImpl extends ServiceImpl<TrackInfoMapper, TrackInfo
         }
         // 删除音频信息
         this.vodService.removeTrackMedia(trackInfo.getMediaFileId());
+        // 删除minio中的数据
+        this.minioService.deleteFile(trackInfo.getCoverUrl());
     }
 }

@@ -1,6 +1,7 @@
 package com.atguigu.tingshu.album.api;
 
 import com.atguigu.tingshu.album.service.AlbumInfoService;
+import com.atguigu.tingshu.common.login.AuthLogin;
 import com.atguigu.tingshu.common.result.Result;
 import com.atguigu.tingshu.model.album.AlbumInfo;
 import com.atguigu.tingshu.query.album.AlbumInfoQuery;
@@ -25,6 +26,7 @@ public class AlbumInfoApiController {
     private AlbumInfoService albumInfoService;
 
     // http://localhost:8500/api/album/albumInfo/saveAlbumInfo
+    @AuthLogin
     @Operation(summary = "新增专辑")
     @PostMapping("saveAlbumInfo")
     public Result<Void> saveAlbumInfo(@RequestBody @Validated AlbumInfoVo albumInfoVo) {
@@ -33,6 +35,7 @@ public class AlbumInfoApiController {
     }
 
     // http://localhost:8500/api/album/albumInfo/findUserAlbumPage/1/10
+    @AuthLogin
     @Operation(summary = "分页条件查询专辑")
     @PostMapping("findUserAlbumPage/{pageNum}/{pageSize}")
     public Result<Page<AlbumListVo>> findUserAlbumPage(
@@ -47,6 +50,7 @@ public class AlbumInfoApiController {
     }
 
     // http://localhost:8500/api/album/albumInfo/removeAlbumInfo/1
+    @AuthLogin
     @Operation(summary = "删除专辑")
     @DeleteMapping("removeAlbumInfo/{albumId}")
     public Result<Void> removeAlbumInfo(@PathVariable Long albumId) {
@@ -62,6 +66,7 @@ public class AlbumInfoApiController {
     }
 
     // http://localhost:8500/api/album/albumInfo/updateAlbumInfo/1
+    @AuthLogin
     @Operation(summary = "更新专辑")
     @PutMapping("updateAlbumInfo/{albumId}")
     public Result<Void> updateAlbumInfo(@RequestBody @Validated AlbumInfoVo albumInfoVo, @PathVariable Long albumId) {
@@ -70,6 +75,7 @@ public class AlbumInfoApiController {
     }
 
     // http://localhost:8500/api/album/albumInfo/findUserAllAlbumList
+    @AuthLogin
     @Operation(summary = "查看当前用户的专辑列表")
     @GetMapping("findUserAllAlbumList")
     public Result<List<AlbumInfo>> findUserAllAlbumList() {

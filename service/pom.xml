@@ -71,6 +71,12 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!--<dependency>
+            <groupId>com.atguigu.tingshu</groupId>
+            <artifactId>rabbitmq-util</artifactId>
+            <version>1.0</version>
+        </dependency>-->
     </dependencies>
 
 </project>

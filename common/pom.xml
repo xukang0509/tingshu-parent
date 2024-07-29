@@ -18,6 +18,7 @@
         <module>kafka-util</module>
         <module>spring-security</module>
         <module>common-log</module>
+        <module>rabbitmq-util</module>
     </modules>
 
 </project>

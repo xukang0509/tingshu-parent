@@ -9,8 +9,8 @@ public interface VodService {
     /**
      * 上传声音
      *
-     * @param file
-     * @return
+     * @param file 文件
+     * @return 媒体文件在服务器中的信息
      */
     VodFileUploadVo uploadTrack(MultipartFile file);
 
