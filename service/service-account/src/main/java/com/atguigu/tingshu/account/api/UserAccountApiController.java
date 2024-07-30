@@ -2,7 +2,6 @@ package com.atguigu.tingshu.account.api;
 
 import com.atguigu.tingshu.account.service.UserAccountService;
 import com.atguigu.tingshu.common.result.Result;
-import com.atguigu.tingshu.model.account.UserAccount;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
@@ -23,9 +22,7 @@ public class UserAccountApiController {
     @Operation(summary = "新增用户账户")
     @PostMapping("save/{userId}")
     public Result saveUserAccount(@PathVariable("userId") Long userId) {
-        UserAccount userAccount = new UserAccount();
-        userAccount.setUserId(userId);
-        this.userAccountService.save(userAccount);
+        this.userAccountService.saveUserAccount(userId);
         return Result.ok();
     }
 

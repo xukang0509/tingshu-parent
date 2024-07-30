@@ -28,8 +28,8 @@ public class WxLoginApiController {
     // http://127.0.0.1:8500/api/user/wxLogin/wxLogin/0a32WRkl2n98Td4tqYnl2uKyDA32WRk2
     @Operation(summary = "小程序微信授权登录")
     @GetMapping("wxLogin/{code}")
-    public Result<Map<String, String>> wxLogin(@PathVariable String code) {
-        return Result.ok(this.userInfoService.wxLogin(code));
+    public Result<Map<String, Object>> wxLogin(@PathVariable String code) {
+        return Result.ok(this.userInfoService.login(code));
     }
 
     // http://127.0.0.1:8500/api/user/wxLogin/getUserInfo

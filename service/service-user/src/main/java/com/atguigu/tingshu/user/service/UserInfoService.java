@@ -13,5 +13,5 @@ public interface UserInfoService extends IService<UserInfo> {
      * @param code 临时登录凭证
      * @return token
      */
-    Map<String, String> wxLogin(String code);
+    Map<String, Object> login(String code);
 }
