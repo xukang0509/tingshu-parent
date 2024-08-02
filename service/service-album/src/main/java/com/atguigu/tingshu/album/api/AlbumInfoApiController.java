@@ -3,7 +3,9 @@ package com.atguigu.tingshu.album.api;
 import com.atguigu.tingshu.album.service.AlbumInfoService;
 import com.atguigu.tingshu.common.login.AuthLogin;
 import com.atguigu.tingshu.common.result.Result;
+import com.atguigu.tingshu.model.album.AlbumAttributeValue;
 import com.atguigu.tingshu.model.album.AlbumInfo;
+import com.atguigu.tingshu.model.album.AlbumStat;
 import com.atguigu.tingshu.query.album.AlbumInfoQuery;
 import com.atguigu.tingshu.vo.album.AlbumInfoVo;
 import com.atguigu.tingshu.vo.album.AlbumListVo;
@@ -80,6 +82,30 @@ public class AlbumInfoApiController {
     @GetMapping("findUserAllAlbumList")
     public Result<List<AlbumInfo>> findUserAllAlbumList() {
         return Result.ok(this.albumInfoService.findUserAllAlbumList());
+    }
+
+
+    @Operation(summary = "分页查询所有专辑信息")
+    @PostMapping("findAllAlbumPage/{pageNum}/{pageSize}")
+    public Result<List<AlbumListVo>> findAllAlbumPage(
+            @Parameter(name = "pageNum", description = "当前页码", required = true)
+            @PathVariable Integer pageNum,
+            @Parameter(name = "pageSize", description = "每页显示条数", required = true)
+            @PathVariable Integer pageSize) {
+        Page<AlbumListVo> albumListVoPage = this.albumInfoService.findAllAlbumPage(pageNum, pageSize);
+        return Result.ok(albumListVoPage.getRecords());
+    }
+
+    @Operation(summary = "根据专辑id查询专辑属性信息")
+    @PostMapping("findAlbumInfoAttributeValuesByAlbumInfoId/{albumInfoId}")
+    public Result<List<AlbumAttributeValue>> findAlbumInfoAttributeValueByAlbumInfoId(@PathVariable("albumInfoId") Long albumInfoId) {
+        return Result.ok(this.albumInfoService.findAlbumInfoAttributeValueByAlbumInfoId(albumInfoId));
+    }
+
+    @Operation(summary = "根据专辑id获取专辑统计信息")
+    @GetMapping("getAlbumStatsByAlbumId/{albumId}")
+    public Result<List<AlbumStat>> getAlbumStatsByAlbumId(@PathVariable("albumId") Long albumId) {
+        return Result.ok(this.albumInfoService.getAlbumStatsByAlbumId(albumId));
     }
 }
 

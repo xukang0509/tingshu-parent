@@ -6,6 +6,7 @@ import com.atguigu.tingshu.album.service.BaseCategoryService;
 import com.atguigu.tingshu.model.album.BaseAttribute;
 import com.atguigu.tingshu.model.album.BaseCategory1;
 import com.atguigu.tingshu.model.album.BaseCategoryView;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import jakarta.annotation.Resource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -83,5 +84,12 @@ public class BaseCategoryServiceImpl extends ServiceImpl<BaseCategory1Mapper, Ba
     @Override
     public List<BaseAttribute> findAttributeByCategory1Id(Long category1Id) {
         return this.baseAttributeMapper.selectAttributeByCategory1Id(category1Id);
+    }
+
+    @Override
+    public BaseCategoryView findBaseCategoryViewByCategory3Id(Long category3Id) {
+        return this.baseCategoryViewMapper.selectOne(Wrappers.lambdaQuery(BaseCategoryView.class)
+                .eq(BaseCategoryView::getCategory3Id, category3Id)
+                .last("limit 1"));
     }
 }

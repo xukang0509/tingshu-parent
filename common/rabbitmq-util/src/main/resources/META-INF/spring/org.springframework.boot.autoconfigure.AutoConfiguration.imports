@@ -1,0 +1,2 @@
+com.atguigu.tingshu.common.config.RabbitInitConfigApplicationListener
+com.atguigu.tingshu.common.service.RabbitService

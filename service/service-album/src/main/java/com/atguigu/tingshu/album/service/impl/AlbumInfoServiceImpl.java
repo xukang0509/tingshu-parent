@@ -5,7 +5,9 @@ import com.atguigu.tingshu.album.mapper.AlbumInfoMapper;
 import com.atguigu.tingshu.album.mapper.AlbumStatMapper;
 import com.atguigu.tingshu.album.service.AlbumInfoService;
 import com.atguigu.tingshu.album.service.MinioService;
+import com.atguigu.tingshu.common.constant.RabbitMqConstant;
 import com.atguigu.tingshu.common.constant.SystemConstant;
+import com.atguigu.tingshu.common.service.RabbitService;
 import com.atguigu.tingshu.common.util.AuthContextHolder;
 import com.atguigu.tingshu.model.album.AlbumAttributeValue;
 import com.atguigu.tingshu.model.album.AlbumInfo;
@@ -27,6 +29,7 @@ import org.springframework.util.CollectionUtils;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
+import java.util.Random;
 
 @Slf4j
 @Service
@@ -44,6 +47,9 @@ public class AlbumInfoServiceImpl extends ServiceImpl<AlbumInfoMapper, AlbumInfo
 
     @Resource
     private MinioService minioService;
+
+    @Resource
+    private RabbitService rabbitService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -79,13 +85,18 @@ public class AlbumInfoServiceImpl extends ServiceImpl<AlbumInfoMapper, AlbumInfo
         saveAlbumStat(albumInfoId, SystemConstant.ALBUM_STAT_SUBSCRIBE);
         saveAlbumStat(albumInfoId, SystemConstant.ALBUM_STAT_BROWSE);
         saveAlbumStat(albumInfoId, SystemConstant.ALBUM_STAT_COMMENT);
+        // 4.如果新增专辑时isOpen是1(上架)，则发送消息新增到es
+        if ("1".equals(albumInfo.getIsOpen())) {
+            rabbitService.sendMessage(RabbitMqConstant.EXCHANGE_ALBUM_UPPER,
+                    RabbitMqConstant.ROUTING_ALBUM_UPPER, String.valueOf(albumInfoId));
+        }
     }
 
     private void saveAlbumStat(Long albumId, String statType) {
         AlbumStat albumStat = new AlbumStat();
         albumStat.setAlbumId(albumId);
         albumStat.setStatType(statType);
-        albumStat.setStatNum(0);
+        albumStat.setStatNum(new Random().nextInt(100));
         this.albumStatMapper.insert(albumStat);
     }
 
@@ -115,6 +126,9 @@ public class AlbumInfoServiceImpl extends ServiceImpl<AlbumInfoMapper, AlbumInfo
         // 3.删除专辑统计信息
         this.albumStatMapper.delete(Wrappers.lambdaQuery(AlbumStat.class)
                 .eq(AlbumStat::getAlbumId, albumId));
+        // 4.删除es中对应的数据
+        rabbitService.sendMessage(RabbitMqConstant.EXCHANGE_ALBUM_LOWER,
+                RabbitMqConstant.ROUTING_ALBUM_LOWER, String.valueOf(albumId));
     }
 
     @Override
@@ -159,6 +173,14 @@ public class AlbumInfoServiceImpl extends ServiceImpl<AlbumInfoMapper, AlbumInfo
         if (!Objects.equals(coverUrl, albumInfo.getCoverUrl())) {
             minioService.deleteFile(coverUrl);
         }
+        // 5.如果新增专辑时isOpen是1(上架)，则发送消息新增到es，否则发送消息删除es记录（不管es记录是否存在）
+        if ("1".equals(albumInfo.getIsOpen())) {
+            rabbitService.sendMessage(RabbitMqConstant.EXCHANGE_ALBUM_UPPER,
+                    RabbitMqConstant.ROUTING_ALBUM_UPPER, String.valueOf(albumId));
+        } else {
+            rabbitService.sendMessage(RabbitMqConstant.EXCHANGE_ALBUM_LOWER,
+                    RabbitMqConstant.ROUTING_ALBUM_LOWER, String.valueOf(albumId));
+        }
     }
 
     @Override
@@ -172,5 +194,23 @@ public class AlbumInfoServiceImpl extends ServiceImpl<AlbumInfoMapper, AlbumInfo
                 .select(AlbumInfo::getId, AlbumInfo::getAlbumTitle)
                 // 由于id是递增的，故id越大就是越接近添加的专辑，故降序排列
                 .orderByDesc(AlbumInfo::getId));
+    }
+
+    @Override
+    public Page<AlbumListVo> findAllAlbumPage(Integer pageNum, Integer pageSize) {
+        Page<AlbumListVo> albumListVoPage = new Page<>(pageNum, pageSize);
+        return this.albumInfoMapper.selectUserAlbumPage(albumListVoPage, new AlbumInfoQuery());
+    }
+
+    @Override
+    public List<AlbumAttributeValue> findAlbumInfoAttributeValueByAlbumInfoId(Long albumInfoId) {
+        return this.albumAttributeValueMapper.selectList(Wrappers.lambdaQuery(AlbumAttributeValue.class)
+                .eq(AlbumAttributeValue::getAlbumId, albumInfoId));
+    }
+
+    @Override
+    public List<AlbumStat> getAlbumStatsByAlbumId(Long albumId) {
+        return this.albumStatMapper.selectList(Wrappers.lambdaQuery(AlbumStat.class)
+                .eq(AlbumStat::getAlbumId, albumId));
     }
 }

@@ -37,10 +37,7 @@ public class WxLoginApiController {
     @Operation(summary = "获取用户信息")
     @GetMapping("getUserInfo")
     public Result<UserInfoVo> getUserInfo() {
-        UserInfo userInfo = this.userInfoService.getById(AuthContextHolder.getUserId());
-        UserInfoVo userInfoVo = new UserInfoVo();
-        BeanUtils.copyProperties(userInfo, userInfoVo);
-        return Result.ok(userInfoVo);
+        return Result.ok(this.userInfoService.getUserInfoById(AuthContextHolder.getUserId()));
     }
 
     // http://127.0.0.1:8500/api/user/wxLogin/updateUser

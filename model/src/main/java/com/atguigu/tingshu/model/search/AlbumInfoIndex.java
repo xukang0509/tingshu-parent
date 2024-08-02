@@ -23,13 +23,16 @@ public class AlbumInfoIndex implements Serializable {
     @Id
     private Long id;
 
+    // 专辑标题
     //  es 中能分词的字段，这个字段数据类型必须是 text！keyword 不分词！ analyzer = "ik_max_word"
     @Field(type = FieldType.Text, analyzer = "ik_max_word")
     private String albumTitle;
 
+    // 专辑简介
     @Field(type = FieldType.Text, analyzer = "ik_max_word")
     private String albumIntro;
 
+    // 主播名称
     @Field(type = FieldType.Keyword)
     private String announcerName;
 
@@ -49,7 +52,7 @@ public class AlbumInfoIndex implements Serializable {
     @Field(type = FieldType.Keyword, index = false)
     private String payType;
 
-    @Field(type = FieldType.Date,format = DateFormat.date_time, pattern = "yyyy-MM-dd HH:mm:ss")
+    @Field(type = FieldType.Date, format = DateFormat.date_time, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date createTime; //
 
     @Field(type = FieldType.Long)
@@ -81,7 +84,7 @@ public class AlbumInfoIndex implements Serializable {
     @Field(type = FieldType.Double)
     private Double hotScore = 0d;
 
-    //专辑属性值
+    // 专辑属性值
     // Nested 支持嵌套查询
     @Field(type = FieldType.Nested)
     private List<AttributeValueIndex> attributeValueIndexList;

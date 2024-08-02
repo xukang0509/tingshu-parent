@@ -72,11 +72,11 @@
             <scope>test</scope>
         </dependency>
 
-        <!--<dependency>
+        <dependency>
             <groupId>com.atguigu.tingshu</groupId>
             <artifactId>rabbitmq-util</artifactId>
             <version>1.0</version>
-        </dependency>-->
+        </dependency>
     </dependencies>
 
 </project>

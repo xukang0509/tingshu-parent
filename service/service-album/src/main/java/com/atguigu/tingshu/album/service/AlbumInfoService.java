@@ -1,6 +1,8 @@
 package com.atguigu.tingshu.album.service;
 
+import com.atguigu.tingshu.model.album.AlbumAttributeValue;
 import com.atguigu.tingshu.model.album.AlbumInfo;
+import com.atguigu.tingshu.model.album.AlbumStat;
 import com.atguigu.tingshu.query.album.AlbumInfoQuery;
 import com.atguigu.tingshu.vo.album.AlbumInfoVo;
 import com.atguigu.tingshu.vo.album.AlbumListVo;
@@ -56,4 +58,30 @@ public interface AlbumInfoService extends IService<AlbumInfo> {
      * @return 专辑列表
      */
     List<AlbumInfo> findUserAllAlbumList();
+
+    /**
+     * 分页查询所有专辑信息
+     *
+     * @param pageNum  当前页码
+     * @param pageSize 每页显示条数
+     * @return 专辑列表
+     */
+    Page<AlbumListVo> findAllAlbumPage(Integer pageNum, Integer pageSize);
+
+
+    /**
+     * 根据专辑id查询专辑属性信息
+     *
+     * @param albumInfoId 专辑id
+     * @return 专辑属性信息
+     */
+    List<AlbumAttributeValue> findAlbumInfoAttributeValueByAlbumInfoId(Long albumInfoId);
+
+    /**
+     * 根据专辑id获取专辑统计信息
+     *
+     * @param albumId 专辑id
+     * @return 统计信息列表
+     */
+    List<AlbumStat> getAlbumStatsByAlbumId(Long albumId);
 }

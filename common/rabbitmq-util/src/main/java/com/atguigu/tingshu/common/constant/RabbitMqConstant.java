@@ -3,10 +3,20 @@ package com.atguigu.tingshu.common.constant;
 public class RabbitMqConstant {
 
     /**
-     * 专辑
+     * 专辑上架
      */
+    public static final String EXCHANGE_ALBUM_UPPER = "tingshu.album.upper";
     public static final String QUEUE_ALBUM_UPPER = "tingshu.album.upper";
+    public static final String ROUTING_ALBUM_UPPER = "tingshu.album.upper";
+
+    /**
+     * 专辑下架
+     */
+    public static final String EXCHANGE_ALBUM_LOWER = "tingshu.album.lower";
     public static final String QUEUE_ALBUM_LOWER = "tingshu.album.lower";
+    public static final String ROUTING_ALBUM_LOWER = "tingshu.album.lower";
+
+
     public static final String QUEUE_ALBUM_STAT_UPDATE = "tingshu.album.stat.update";
     public static final String QUEUE_ALBUM_ES_STAT_UPDATE = "tingshu.album.es.stat.update";
     public static final String QUEUE_ALBUM_RANKING_UPDATE = "tingshu.album.ranking.update";
