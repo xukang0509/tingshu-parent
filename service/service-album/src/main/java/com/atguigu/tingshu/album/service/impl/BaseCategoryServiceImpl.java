@@ -3,9 +3,7 @@ package com.atguigu.tingshu.album.service.impl;
 import com.alibaba.fastjson.JSONObject;
 import com.atguigu.tingshu.album.mapper.*;
 import com.atguigu.tingshu.album.service.BaseCategoryService;
-import com.atguigu.tingshu.model.album.BaseAttribute;
-import com.atguigu.tingshu.model.album.BaseCategory1;
-import com.atguigu.tingshu.model.album.BaseCategoryView;
+import com.atguigu.tingshu.model.album.*;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import jakarta.annotation.Resource;
@@ -91,5 +89,47 @@ public class BaseCategoryServiceImpl extends ServiceImpl<BaseCategory1Mapper, Ba
         return this.baseCategoryViewMapper.selectOne(Wrappers.lambdaQuery(BaseCategoryView.class)
                 .eq(BaseCategoryView::getCategory3Id, category3Id)
                 .last("limit 1"));
+    }
+
+    @Override
+    public List<BaseCategory3> findTopBaseCategory3ByCategory1Id(Long category1Id) {
+        List<BaseCategory2> baseCategory2List = this.baseCategory2Mapper.selectList(Wrappers.lambdaQuery(BaseCategory2.class)
+                .eq(BaseCategory2::getCategory1Id, category1Id)
+                .select(BaseCategory2::getId));
+        if (CollectionUtils.isEmpty(baseCategory2List)) return null;
+        List<Long> category2Ids = baseCategory2List.stream().map(BaseCategory2::getId).toList();
+        return this.baseCategory3Mapper.selectList(Wrappers.lambdaQuery(BaseCategory3.class)
+                .in(BaseCategory3::getCategory2Id, category2Ids)
+                .eq(BaseCategory3::getIsTop, 1)
+                .last("limit 7"));
+    }
+
+    @Override
+    public JSONObject getBaseCategoryList(Long category1Id) {
+        List<BaseCategoryView> categoryViews = this.baseCategoryViewMapper.selectList(Wrappers.lambdaQuery(BaseCategoryView.class)
+                .eq(BaseCategoryView::getCategory1Id, category1Id));
+        if (CollectionUtils.isEmpty(categoryViews)) return null;
+        JSONObject category1Json = new JSONObject();
+        category1Json.put("categoryId", category1Id);
+        category1Json.put("categoryName", categoryViews.get(0).getCategory1Name());
+        // 根据二级分类id对同一个一级分类下的数据进行分组，获取二级分类数据Map<二级分类id，同一个二级分类id下的数据集合>
+        Map<Long, List<BaseCategoryView>> category2IdToItems = categoryViews.stream().collect(Collectors.groupingBy(BaseCategoryView::getCategory2Id));
+        List<JSONObject> category2Children = new ArrayList<>();
+        category1Json.put("categoryChild", category2Children);
+        category2IdToItems.forEach((category2Id, categoryView3List) -> {
+            JSONObject category2Json = new JSONObject();
+            category2Json.put("categoryId", category2Id);
+            category2Json.put("categoryName", categoryView3List.get(0).getCategory2Name());
+            List<JSONObject> category3Children = new ArrayList<>();
+            category2Json.put("categoryChild", category3Children);
+            categoryView3List.forEach(categoryView3 -> {
+                JSONObject category3Json = new JSONObject();
+                category3Json.put("categoryId", categoryView3.getCategory3Id());
+                category3Json.put("categoryName", categoryView3.getCategory3Name());
+                category3Children.add(category3Json);
+            });
+            category2Children.add(category2Json);
+        });
+        return category1Json;
     }
 }

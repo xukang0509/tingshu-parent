@@ -12,6 +12,6 @@ public class UserAccountDegradeFeignClient implements UserAccountFeignClient {
 
     @Override
     public Result saveUserAccount(Long userId) {
-        return Result.fail();
+        return null;
     }
 }

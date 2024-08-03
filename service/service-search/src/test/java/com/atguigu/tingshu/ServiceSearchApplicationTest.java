@@ -3,11 +3,13 @@ package com.atguigu.tingshu;
 import com.atguigu.tingshu.album.client.AlbumInfoFeignClient;
 import com.atguigu.tingshu.album.client.CategoryFeignClient;
 import com.atguigu.tingshu.common.result.Result;
+import com.atguigu.tingshu.common.util.PinYinUtils;
 import com.atguigu.tingshu.model.album.AlbumAttributeValue;
 import com.atguigu.tingshu.model.album.AlbumInfo;
 import com.atguigu.tingshu.model.album.BaseCategoryView;
 import com.atguigu.tingshu.model.search.AlbumInfoIndex;
 import com.atguigu.tingshu.model.search.AttributeValueIndex;
+import com.atguigu.tingshu.model.search.SuggestIndex;
 import com.atguigu.tingshu.user.client.UserInfoFeignClient;
 import com.atguigu.tingshu.vo.album.AlbumListVo;
 import com.atguigu.tingshu.vo.user.UserInfoVo;
@@ -18,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchTemplate;
 import org.springframework.data.elasticsearch.core.IndexOperations;
+import org.springframework.data.elasticsearch.core.suggest.Completion;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
@@ -39,11 +42,20 @@ public class ServiceSearchApplicationTest {
 
     @Test
     public void importData() {
-        IndexOperations indexOps = this.elasticsearchTemplate.indexOps(AlbumInfoIndex.class);
-        if (!indexOps.exists()) {
-            indexOps.create();
-            indexOps.putMapping();
+        // 专辑信息索引
+        IndexOperations albumInfoIndexOps = this.elasticsearchTemplate.indexOps(AlbumInfoIndex.class);
+        // 关键字补 全建议索引
+        IndexOperations suggestIndexOps = this.elasticsearchTemplate.indexOps(SuggestIndex.class);
+        if (!albumInfoIndexOps.exists()) {
+            albumInfoIndexOps.create();
+            albumInfoIndexOps.putMapping();
         }
+        if (!suggestIndexOps.exists()) {
+            suggestIndexOps.delete();
+            suggestIndexOps.create();
+            suggestIndexOps.putMapping();
+        }
+
         Integer pageNum = 1;
         Integer pageSize = 100;
 
@@ -58,6 +70,15 @@ public class ServiceSearchApplicationTest {
             }
 
             List<AlbumInfoIndex> albumInfoIndexList = albumListVoList.stream().map(albumListVo -> {
+                // 自动补 全-标题
+                SuggestIndex titleSuggestIndex = new SuggestIndex();
+                titleSuggestIndex.setId(null);
+                titleSuggestIndex.setTitle(albumListVo.getAlbumTitle());
+                titleSuggestIndex.setKeyword(new Completion(new String[]{albumListVo.getAlbumTitle()}));
+                titleSuggestIndex.setKeywordPinyin(new Completion(new String[]{PinYinUtils.toHanyuPinyin(albumListVo.getAlbumTitle())}));
+                titleSuggestIndex.setKeywordSequence(new Completion(new String[]{PinYinUtils.getFirstLetter(albumListVo.getAlbumTitle())}));
+                this.elasticsearchTemplate.save(titleSuggestIndex);
+
                 Long albumId = albumListVo.getAlbumId();
                 AlbumInfoIndex albumInfoIndex = new AlbumInfoIndex();
                 albumInfoIndex.setId(albumId);
@@ -80,9 +101,17 @@ public class ServiceSearchApplicationTest {
                 Result<UserInfoVo> userInfoVoRes = this.userInfoFeignClient.getUserInfoById(albumInfo.getUserId());
                 Assert.notNull(userInfoVoRes, "获取用户信息失败！");
                 UserInfoVo userInfoVo = userInfoVoRes.getData();
-                if (userInfoVo != null) {
-                    albumInfoIndex.setAnnouncerName(userInfoVo.getNickname());
-                }
+                Assert.notNull(userInfoVo, "用户信息为空");
+                albumInfoIndex.setAnnouncerName(userInfoVo.getNickname());
+
+                // 自动补 全-主播
+                SuggestIndex announcerSuggestIndex = new SuggestIndex();
+                announcerSuggestIndex.setId(null);
+                announcerSuggestIndex.setTitle(albumInfoIndex.getAnnouncerName());
+                announcerSuggestIndex.setKeyword(new Completion(new String[]{albumInfoIndex.getAnnouncerName()}));
+                announcerSuggestIndex.setKeywordPinyin(new Completion(new String[]{PinYinUtils.toHanyuPinyin(albumInfoIndex.getAnnouncerName())}));
+                announcerSuggestIndex.setKeywordSequence(new Completion(new String[]{PinYinUtils.getFirstLetter(albumInfoIndex.getAnnouncerName())}));
+                this.elasticsearchTemplate.save(announcerSuggestIndex);
 
                 // 根据三级分类id获取分类信息
                 Result<BaseCategoryView> baseCategoryViewRes = this.categoryFeignClient.findBaseCategoryViewByCategory3Id(albumInfo.getCategory3Id());

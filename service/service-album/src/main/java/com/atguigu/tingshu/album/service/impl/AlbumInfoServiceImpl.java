@@ -88,7 +88,7 @@ public class AlbumInfoServiceImpl extends ServiceImpl<AlbumInfoMapper, AlbumInfo
         // 4.如果新增专辑时isOpen是1(上架)，则发送消息新增到es
         if ("1".equals(albumInfo.getIsOpen())) {
             rabbitService.sendMessage(RabbitMqConstant.EXCHANGE_ALBUM_UPPER,
-                    RabbitMqConstant.ROUTING_ALBUM_UPPER, String.valueOf(albumInfoId));
+                    RabbitMqConstant.ROUTING_ALBUM_UPPER, albumInfoId);
         }
     }
 
@@ -128,7 +128,7 @@ public class AlbumInfoServiceImpl extends ServiceImpl<AlbumInfoMapper, AlbumInfo
                 .eq(AlbumStat::getAlbumId, albumId));
         // 4.删除es中对应的数据
         rabbitService.sendMessage(RabbitMqConstant.EXCHANGE_ALBUM_LOWER,
-                RabbitMqConstant.ROUTING_ALBUM_LOWER, String.valueOf(albumId));
+                RabbitMqConstant.ROUTING_ALBUM_LOWER, albumId);
     }
 
     @Override
@@ -176,10 +176,10 @@ public class AlbumInfoServiceImpl extends ServiceImpl<AlbumInfoMapper, AlbumInfo
         // 5.如果新增专辑时isOpen是1(上架)，则发送消息新增到es，否则发送消息删除es记录（不管es记录是否存在）
         if ("1".equals(albumInfo.getIsOpen())) {
             rabbitService.sendMessage(RabbitMqConstant.EXCHANGE_ALBUM_UPPER,
-                    RabbitMqConstant.ROUTING_ALBUM_UPPER, String.valueOf(albumId));
+                    RabbitMqConstant.ROUTING_ALBUM_UPPER, albumId);
         } else {
             rabbitService.sendMessage(RabbitMqConstant.EXCHANGE_ALBUM_LOWER,
-                    RabbitMqConstant.ROUTING_ALBUM_LOWER, String.valueOf(albumId));
+                    RabbitMqConstant.ROUTING_ALBUM_LOWER, albumId);
         }
     }
 

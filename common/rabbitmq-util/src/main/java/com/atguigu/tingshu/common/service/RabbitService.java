@@ -26,7 +26,6 @@ public class RabbitService {
      * @param message    消息
      */
     public boolean sendMessage(String exchange, String routingKey, Object message) {
-        rabbitTemplate.convertAndSend(exchange, routingKey, message);
         //1.创建自定义相关消息对象-包含业务数据本身，交换器名称，路由键，队列类型，延迟时间,重试次数
         GuiguCorrelationData correlationData = new GuiguCorrelationData();
         String uuid = "mq:" + UUID.randomUUID().toString().replaceAll("-", "");

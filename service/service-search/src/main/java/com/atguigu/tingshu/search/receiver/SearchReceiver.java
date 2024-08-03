@@ -2,7 +2,6 @@ package com.atguigu.tingshu.search.receiver;
 
 import com.atguigu.tingshu.common.constant.RabbitMqConstant;
 import com.atguigu.tingshu.search.service.SearchService;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.rabbitmq.client.Channel;
 import jakarta.annotation.Resource;
 import lombok.SneakyThrows;
@@ -12,6 +11,8 @@ import org.springframework.amqp.rabbit.annotation.Queue;
 import org.springframework.amqp.rabbit.annotation.QueueBinding;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
+
+import java.util.Objects;
 
 @Component
 public class SearchReceiver {
@@ -29,9 +30,9 @@ public class SearchReceiver {
                     key = RabbitMqConstant.ROUTING_ALBUM_UPPER
             )
     )
-    public void albumUpper(String albumId, Message message, Channel channel) {
-        if (StringUtils.isNotBlank(albumId)) {
-            this.searchService.upperAlbum(Long.parseLong(albumId));
+    public void albumUpper(Long albumId, Message message, Channel channel) {
+        if (!Objects.isNull(albumId)) {
+            this.searchService.upperAlbum(albumId);
         }
         // 手动应答
         channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
@@ -48,9 +49,9 @@ public class SearchReceiver {
                     key = RabbitMqConstant.ROUTING_ALBUM_LOWER
             )
     )
-    public void albumLower(String albumId, Message message, Channel channel) {
-        if (StringUtils.isNotBlank(albumId)) {
-            this.searchService.downAlbum(Long.parseLong(albumId));
+    public void albumLower(Long albumId, Message message, Channel channel) {
+        if (!Objects.isNull(albumId)) {
+            this.searchService.downAlbum(albumId);
         }
         // 手动应答
         channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);

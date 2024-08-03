@@ -41,7 +41,7 @@ public class RabbitInitConfigApplicationListener implements ApplicationListener<
                 log.info("消息发送到Exchange成功：{}", correlationData);
             } else {
                 //消息到交换器失败
-                log.error("消息发送到Exchange失败：{}", reason);
+                log.error("消息发送到Exchange失败：data：{}，reason：{}", correlationData, reason);
                 //执行消息重发
                 this.retrySendMsg(correlationData);
             }

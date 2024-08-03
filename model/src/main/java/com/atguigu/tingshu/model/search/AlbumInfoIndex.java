@@ -53,7 +53,7 @@ public class AlbumInfoIndex implements Serializable {
     private String payType;
 
     @Field(type = FieldType.Date, format = DateFormat.date_time, pattern = "yyyy-MM-dd HH:mm:ss")
-    private Date createTime; //
+    private Date createTime;
 
     @Field(type = FieldType.Long)
     private Long category1Id;
