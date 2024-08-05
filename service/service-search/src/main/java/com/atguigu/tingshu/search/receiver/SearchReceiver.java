@@ -31,11 +31,24 @@ public class SearchReceiver {
             )
     )
     public void albumUpper(Long albumId, Message message, Channel channel) {
-        if (!Objects.isNull(albumId)) {
-            this.searchService.upperAlbum(albumId);
+        try {
+            if (!Objects.isNull(albumId)) {
+                this.searchService.upperAlbum(albumId);
+            }
+            // 手动应答
+            channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
+        } catch (Exception e) {
+            // 如果判断该消息已经处理过一次
+            // getRedelivered() 判断是否已经处理过一次消息！
+            if (!message.getMessageProperties().getRedelivered()) {
+                // 消息已重复处理,拒绝再次接收
+                // 拒绝消息
+                channel.basicReject(message.getMessageProperties().getDeliveryTag(), false);
+            } else {
+                // 该消息不是重复的
+                channel.basicNack(message.getMessageProperties().getDeliveryTag(), false, true);
+            }
         }
-        // 手动应答
-        channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
     }
 
     /**
@@ -50,10 +63,20 @@ public class SearchReceiver {
             )
     )
     public void albumLower(Long albumId, Message message, Channel channel) {
-        if (!Objects.isNull(albumId)) {
-            this.searchService.downAlbum(albumId);
+        try {
+            if (!Objects.isNull(albumId)) {
+                this.searchService.downAlbum(albumId);
+            }
+            // 手动应答
+            channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
+        } catch (Exception e) {
+            if (!message.getMessageProperties().getRedelivered()) {
+                // 消息已重复处理,拒绝再次接收
+                channel.basicReject(message.getMessageProperties().getDeliveryTag(), false);
+            } else {
+                // 该消息不是重复的
+                channel.basicNack(message.getMessageProperties().getDeliveryTag(), false, true);
+            }
         }
-        // 手动应答
-        channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
     }
 }

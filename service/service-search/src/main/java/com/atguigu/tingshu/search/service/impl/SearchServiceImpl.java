@@ -13,15 +13,19 @@ import co.elastic.clients.elasticsearch.core.search.Suggestion;
 import com.alibaba.fastjson.JSONObject;
 import com.atguigu.tingshu.album.client.AlbumInfoFeignClient;
 import com.atguigu.tingshu.album.client.CategoryFeignClient;
-import com.atguigu.tingshu.common.constant.SystemConstant;
 import com.atguigu.tingshu.common.result.Result;
-import com.atguigu.tingshu.model.album.*;
+import com.atguigu.tingshu.common.util.PinYinUtils;
+import com.atguigu.tingshu.model.album.AlbumAttributeValue;
+import com.atguigu.tingshu.model.album.AlbumInfo;
+import com.atguigu.tingshu.model.album.BaseCategory3;
+import com.atguigu.tingshu.model.album.BaseCategoryView;
 import com.atguigu.tingshu.model.search.AlbumInfoIndex;
 import com.atguigu.tingshu.model.search.AttributeValueIndex;
 import com.atguigu.tingshu.model.search.SuggestIndex;
 import com.atguigu.tingshu.query.search.AlbumIndexQuery;
 import com.atguigu.tingshu.search.service.SearchService;
 import com.atguigu.tingshu.user.client.UserInfoFeignClient;
+import com.atguigu.tingshu.vo.album.AlbumStatVo;
 import com.atguigu.tingshu.vo.search.AlbumInfoIndexVo;
 import com.atguigu.tingshu.vo.search.AlbumSearchResponseVo;
 import com.atguigu.tingshu.vo.user.UserInfoVo;
@@ -30,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchTemplate;
+import org.springframework.data.elasticsearch.core.suggest.Completion;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
@@ -70,12 +75,30 @@ public class SearchServiceImpl implements SearchService {
         Assert.notNull(albumInfo, "该专辑不存在！");
         BeanUtils.copyProperties(albumInfo, albumInfoIndex);
 
+        // 自动补 全-标题
+        SuggestIndex titleSuggestIndex = new SuggestIndex();
+        titleSuggestIndex.setId(null);
+        titleSuggestIndex.setTitle(albumInfo.getAlbumTitle());
+        titleSuggestIndex.setKeyword(new Completion(new String[]{albumInfo.getAlbumTitle()}));
+        titleSuggestIndex.setKeywordPinyin(new Completion(new String[]{PinYinUtils.toHanyuPinyin(albumInfo.getAlbumTitle())}));
+        titleSuggestIndex.setKeywordSequence(new Completion(new String[]{PinYinUtils.getFirstLetter(albumInfo.getAlbumTitle())}));
+        this.elasticsearchTemplate.save(titleSuggestIndex);
+
         // 根据用户id获取用户信息
         Result<UserInfoVo> userInfoVoRes = this.userInfoFeignClient.getUserInfoById(albumInfo.getUserId());
         Assert.notNull(userInfoVoRes, "获取用户信息失败！");
         UserInfoVo userInfoVo = userInfoVoRes.getData();
         Assert.notNull(userInfoVo, "用户信息为空！");
         albumInfoIndex.setAnnouncerName(userInfoVo.getNickname());
+
+        // 自动补 全-主播
+        SuggestIndex announcerSuggestIndex = new SuggestIndex();
+        announcerSuggestIndex.setId(null);
+        announcerSuggestIndex.setTitle(albumInfoIndex.getAnnouncerName());
+        announcerSuggestIndex.setKeyword(new Completion(new String[]{albumInfoIndex.getAnnouncerName()}));
+        announcerSuggestIndex.setKeywordPinyin(new Completion(new String[]{PinYinUtils.toHanyuPinyin(albumInfoIndex.getAnnouncerName())}));
+        announcerSuggestIndex.setKeywordSequence(new Completion(new String[]{PinYinUtils.getFirstLetter(albumInfoIndex.getAnnouncerName())}));
+        this.elasticsearchTemplate.save(announcerSuggestIndex);
 
         // 根据三级分类id获取分类信息
         Result<BaseCategoryView> baseCategoryViewRes = this.categoryFeignClient.findBaseCategoryViewByCategory3Id(albumInfo.getCategory3Id());
@@ -100,16 +123,14 @@ public class SearchServiceImpl implements SearchService {
         albumInfoIndex.setAttributeValueIndexList(attributeValueIndexList);
 
         // 根据专辑Id获取统计信息列表
-        Result<List<AlbumStat>> albumStatListRes = this.albumInfoFeignClient.getAlbumStatsByAlbumId(albumId);
+        Result<AlbumStatVo> albumStatListRes = this.albumInfoFeignClient.getAlbumStatsByAlbumId(albumId);
         Assert.notNull(albumStatListRes, "根据专辑Id获取统计信息列表失败！");
-        List<AlbumStat> albumStatList = albumStatListRes.getData();
-        Assert.notEmpty(albumStatList, "统计信息列表为空！");
-        Map<String, Integer> typeToNumMap = albumStatList.stream()
-                .collect(Collectors.toMap(AlbumStat::getStatType, AlbumStat::getStatNum));
-        albumInfoIndex.setPlayStatNum(typeToNumMap.get(SystemConstant.ALBUM_STAT_PLAY));
-        albumInfoIndex.setSubscribeStatNum(typeToNumMap.get(SystemConstant.ALBUM_STAT_SUBSCRIBE));
-        albumInfoIndex.setBuyStatNum(typeToNumMap.get(SystemConstant.ALBUM_STAT_BROWSE));
-        albumInfoIndex.setCommentStatNum(typeToNumMap.get(SystemConstant.ALBUM_STAT_COMMENT));
+        AlbumStatVo albumStatVo = albumStatListRes.getData();
+        Assert.notNull(albumStatVo, "专辑统计信息为空！");
+        albumInfoIndex.setPlayStatNum(albumStatVo.getPlayStatNum());
+        albumInfoIndex.setSubscribeStatNum(albumStatVo.getSubscribeStatNum());
+        albumInfoIndex.setBuyStatNum(albumStatVo.getBuyStatNum());
+        albumInfoIndex.setCommentStatNum(albumStatVo.getCommentStatNum());
         // 热度：根据上述指标结合一定的系数进行计算
         albumInfoIndex.setHotScore(albumInfoIndex.getPlayStatNum() * 0.2 +
                 albumInfoIndex.getSubscribeStatNum() * 0.3 +
@@ -259,7 +280,9 @@ public class SearchServiceImpl implements SearchService {
             for (String attribute : attributeList) {
                 // 以:进行分割，分割后应该是2个元素，属性id:属性值id
                 String[] attrs = StringUtils.split(attribute, ":");
-                if (attrs == null || attrs.length != 2) continue;
+                if (attrs == null || attrs.length != 2 ||
+                        !StringUtils.isNumeric(attrs[0]) || !StringUtils.isNumeric(attrs[1]))
+                    continue;
                 // 构建嵌套过滤
                 boolQueryBuilder.filter(f -> f.nested(n -> n.path("attributeValueIndexList")
                         .query(q -> q.bool(b -> b.must(m -> m.term(t -> t.field("attributeValueIndexList.attributeId").value(attrs[0])))
@@ -279,7 +302,8 @@ public class SearchServiceImpl implements SearchService {
         if (StringUtils.isNotBlank(order)) {
             // 使用冒号分割字符串 1:desc
             String[] orders = StringUtils.split(order, ":");
-            if (orders != null && orders.length == 2) {
+            if (orders != null && orders.length == 2 &&
+                    StringUtils.isNumeric(orders[0]) && StringUtils.isNotEmpty(orders[1])) {
                 // lambda表达式中需要final类型的字符串变量。
                 final String orderField = switch (orders[0]) {
                     case "1" -> "hotScore";
@@ -305,6 +329,7 @@ public class SearchServiceImpl implements SearchService {
     @Override
     public List<String> completeSuggest(String keyWord) {
         try {
+            if (StringUtils.isEmpty(keyWord)) return null;
             // 组装DSL
             SearchRequest searchRequest = SearchRequest.of(s -> s.index("suggestinfo")
                     .suggest(sg -> sg.suggesters("keywordSuggest", ks -> ks.prefix(keyWord).completion(c -> c.field("keyword").size(10).skipDuplicates(true))))
@@ -368,6 +393,7 @@ public class SearchServiceImpl implements SearchService {
             SearchResponse<AlbumInfoIndex> response = this.esClient.search(s -> s.index("albuminfo")
                             .query(q -> q.term(t -> t.field("category1Id").value(category1Id)))
                             .sort(ss -> ss.field(f -> f.field(orderField).order(SortOrder.Desc)))
+                            .size(20)
                     , AlbumInfoIndex.class);
             // 解析结果集
             List<Hit<AlbumInfoIndex>> hitList = response.hits().hits();

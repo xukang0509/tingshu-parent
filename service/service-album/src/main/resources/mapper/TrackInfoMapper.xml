@@ -33,5 +33,15 @@
         GROUP BY t.id
         ORDER BY t.id DESC
     </select>
+
+    <select id="selectAlbumTrackPageByAlbumId" resultType="com.atguigu.tingshu.vo.album.AlbumTrackListVo">
+        select t.id trackId, t.track_title, t.media_duration, t.order_num, t.create_time,
+        sum(if(stat.stat_type = '0701', stat.stat_num, 0)) playStatNum,
+        sum(if(stat.stat_type = '0704', stat.stat_num, 0)) commentStatNum
+        from track_info t
+        left join track_stat stat on stat.track_id=t.id and stat.is_deleted = 0
+        where t.is_deleted = 0 and t.album_id = #{albumId} and t.is_open = '1'
+        group by t.id order by t.order_num asc
+    </select>
 </mapper>
 

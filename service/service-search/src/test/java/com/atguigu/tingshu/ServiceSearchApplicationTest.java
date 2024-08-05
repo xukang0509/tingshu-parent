@@ -50,11 +50,9 @@ public class ServiceSearchApplicationTest {
             albumInfoIndexOps.create();
             albumInfoIndexOps.putMapping();
         }
-        if (!suggestIndexOps.exists()) {
-            suggestIndexOps.delete();
-            suggestIndexOps.create();
-            suggestIndexOps.putMapping();
-        }
+        suggestIndexOps.delete();
+        suggestIndexOps.create();
+        suggestIndexOps.putMapping();
 
         Integer pageNum = 1;
         Integer pageSize = 100;

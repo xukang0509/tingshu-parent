@@ -4,8 +4,8 @@ import com.atguigu.tingshu.album.client.impl.AlbumInfoDegradeFeignClient;
 import com.atguigu.tingshu.common.result.Result;
 import com.atguigu.tingshu.model.album.AlbumAttributeValue;
 import com.atguigu.tingshu.model.album.AlbumInfo;
-import com.atguigu.tingshu.model.album.AlbumStat;
 import com.atguigu.tingshu.vo.album.AlbumListVo;
+import com.atguigu.tingshu.vo.album.AlbumStatVo;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,6 +32,6 @@ public interface AlbumInfoFeignClient {
     @PostMapping("api/album/albumInfo/findAlbumInfoAttributeValuesByAlbumInfoId/{albumInfoId}")
     Result<List<AlbumAttributeValue>> findAlbumInfoAttributeValueByAlbumInfoId(@PathVariable("albumInfoId") Long albumInfoId);
 
-    @GetMapping("api/album/albumInfo/getAlbumStatsByAlbumId/{albumId}")
-    Result<List<AlbumStat>> getAlbumStatsByAlbumId(@PathVariable("albumId") Long albumId);
+    @GetMapping("api/album/albumInfo/getAlbumState/{albumId}")
+    Result<AlbumStatVo> getAlbumStatsByAlbumId(@PathVariable("albumId") Long albumId);
 }

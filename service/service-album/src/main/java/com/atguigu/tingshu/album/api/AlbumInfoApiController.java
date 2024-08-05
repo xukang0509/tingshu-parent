@@ -5,10 +5,10 @@ import com.atguigu.tingshu.common.login.AuthLogin;
 import com.atguigu.tingshu.common.result.Result;
 import com.atguigu.tingshu.model.album.AlbumAttributeValue;
 import com.atguigu.tingshu.model.album.AlbumInfo;
-import com.atguigu.tingshu.model.album.AlbumStat;
 import com.atguigu.tingshu.query.album.AlbumInfoQuery;
 import com.atguigu.tingshu.vo.album.AlbumInfoVo;
 import com.atguigu.tingshu.vo.album.AlbumListVo;
+import com.atguigu.tingshu.vo.album.AlbumStatVo;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -103,8 +103,8 @@ public class AlbumInfoApiController {
     }
 
     @Operation(summary = "根据专辑id获取专辑统计信息")
-    @GetMapping("getAlbumStatsByAlbumId/{albumId}")
-    public Result<List<AlbumStat>> getAlbumStatsByAlbumId(@PathVariable("albumId") Long albumId) {
+    @GetMapping("getAlbumState/{albumId}")
+    public Result<AlbumStatVo> getAlbumStatsByAlbumId(@PathVariable("albumId") Long albumId) {
         return Result.ok(this.albumInfoService.getAlbumStatsByAlbumId(albumId));
     }
 }

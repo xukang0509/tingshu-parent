@@ -6,9 +6,11 @@ import com.atguigu.tingshu.common.login.AuthLogin;
 import com.atguigu.tingshu.common.result.Result;
 import com.atguigu.tingshu.model.album.TrackInfo;
 import com.atguigu.tingshu.query.album.TrackInfoQuery;
+import com.atguigu.tingshu.vo.album.AlbumTrackListVo;
 import com.atguigu.tingshu.vo.album.TrackInfoVo;
 import com.atguigu.tingshu.vo.album.TrackListVo;
 import com.atguigu.tingshu.vo.album.VodFileUploadVo;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -84,6 +86,17 @@ public class TrackInfoApiController {
     public Result<Void> removeTrackInfo(@PathVariable Long trackId) {
         this.trackInfoService.removeTrackInfo(trackId);
         return Result.ok();
+    }
+
+    // http://127.0.0.1:8500/api/album/trackInfo/findAlbumTrackPage/1596/1/10
+    @AuthLogin(required = false)
+    @Operation(summary = "根据专辑id分页查询声音")
+    @GetMapping("findAlbumTrackPage/{albumId}/{pageNum}/{pageSize}")
+    public Result<IPage<AlbumTrackListVo>> findAlbumTrackPage(
+            @PathVariable("albumId") Long albumId,
+            @PathVariable("pageNum") Integer pageNum,
+            @PathVariable("pageSize") Integer pageSize) {
+        return Result.ok(this.trackInfoService.findAlbumTrackPage(albumId, new Page<AlbumTrackListVo>(pageNum, pageSize)));
     }
 }
 

@@ -2,10 +2,10 @@ package com.atguigu.tingshu.album.service;
 
 import com.atguigu.tingshu.model.album.AlbumAttributeValue;
 import com.atguigu.tingshu.model.album.AlbumInfo;
-import com.atguigu.tingshu.model.album.AlbumStat;
 import com.atguigu.tingshu.query.album.AlbumInfoQuery;
 import com.atguigu.tingshu.vo.album.AlbumInfoVo;
 import com.atguigu.tingshu.vo.album.AlbumListVo;
+import com.atguigu.tingshu.vo.album.AlbumStatVo;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 
@@ -83,5 +83,5 @@ public interface AlbumInfoService extends IService<AlbumInfo> {
      * @param albumId 专辑id
      * @return 统计信息列表
      */
-    List<AlbumStat> getAlbumStatsByAlbumId(Long albumId);
+    AlbumStatVo getAlbumStatsByAlbumId(Long albumId);
 }

@@ -1,7 +1,12 @@
 package com.atguigu.tingshu.album.client;
 
 import com.atguigu.tingshu.album.client.impl.TrackInfoDegradeFeignClient;
+import com.atguigu.tingshu.common.result.Result;
+import com.atguigu.tingshu.vo.album.AlbumTrackListVo;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 
 /**
  * <p>
@@ -12,5 +17,9 @@ import org.springframework.cloud.openfeign.FeignClient;
  */
 @FeignClient(value = "service-album", fallback = TrackInfoDegradeFeignClient.class)
 public interface TrackInfoFeignClient {
-
+    @GetMapping("api/album/trackInfo/findAlbumTrackPage/{albumId}/{pageNum}/{pageSize}")
+    Result<IPage<AlbumTrackListVo>> findAlbumTrackPage(
+            @PathVariable("albumId") Long albumId,
+            @PathVariable("pageNum") Integer pageNum,
+            @PathVariable("pageSize") Integer pageSize);
 }

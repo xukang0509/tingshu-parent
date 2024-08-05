@@ -16,6 +16,7 @@ import com.atguigu.tingshu.query.album.AlbumInfoQuery;
 import com.atguigu.tingshu.vo.album.AlbumAttributeValueVo;
 import com.atguigu.tingshu.vo.album.AlbumInfoVo;
 import com.atguigu.tingshu.vo.album.AlbumListVo;
+import com.atguigu.tingshu.vo.album.AlbumStatVo;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -28,8 +29,10 @@ import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -209,8 +212,17 @@ public class AlbumInfoServiceImpl extends ServiceImpl<AlbumInfoMapper, AlbumInfo
     }
 
     @Override
-    public List<AlbumStat> getAlbumStatsByAlbumId(Long albumId) {
-        return this.albumStatMapper.selectList(Wrappers.lambdaQuery(AlbumStat.class)
+    public AlbumStatVo getAlbumStatsByAlbumId(Long albumId) {
+        List<AlbumStat> albumStatList = this.albumStatMapper.selectList(Wrappers.lambdaQuery(AlbumStat.class)
                 .eq(AlbumStat::getAlbumId, albumId));
+        if (CollectionUtils.isEmpty(albumStatList)) return null;
+        Map<String, Integer> typeToNumMap = albumStatList.stream().collect(Collectors.toMap(AlbumStat::getStatType, AlbumStat::getStatNum));
+        AlbumStatVo albumStatVo = new AlbumStatVo();
+        albumStatVo.setAlbumId(albumId);
+        albumStatVo.setPlayStatNum(typeToNumMap.get(SystemConstant.ALBUM_STAT_PLAY));
+        albumStatVo.setSubscribeStatNum(typeToNumMap.get(SystemConstant.ALBUM_STAT_SUBSCRIBE));
+        albumStatVo.setBuyStatNum(typeToNumMap.get(SystemConstant.ALBUM_STAT_BROWSE));
+        albumStatVo.setCommentStatNum(typeToNumMap.get(SystemConstant.ALBUM_STAT_COMMENT));
+        return albumStatVo;
     }
 }

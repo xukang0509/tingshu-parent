@@ -1,11 +1,16 @@
 package com.atguigu.tingshu.user.service.impl;
 
 import com.atguigu.tingshu.model.user.UserInfo;
+import com.atguigu.tingshu.model.user.UserPaidAlbum;
+import com.atguigu.tingshu.model.user.UserPaidTrack;
 import com.atguigu.tingshu.user.login.LoginClient;
 import com.atguigu.tingshu.user.login.LoginForm;
 import com.atguigu.tingshu.user.mapper.UserInfoMapper;
+import com.atguigu.tingshu.user.mapper.UserPaidAlbumMapper;
+import com.atguigu.tingshu.user.mapper.UserPaidTrackMapper;
 import com.atguigu.tingshu.user.service.UserInfoService;
 import com.atguigu.tingshu.vo.user.UserInfoVo;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import io.seata.spring.annotation.GlobalTransactional;
 import jakarta.annotation.Resource;
@@ -13,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -25,6 +31,12 @@ public class UserInfoServiceImpl extends ServiceImpl<UserInfoMapper, UserInfo> i
 
     @Resource
     private LoginClient loginClient;
+
+    @Resource
+    private UserPaidAlbumMapper userPaidAlbumMapper;
+
+    @Resource
+    private UserPaidTrackMapper userPaidTrackMapper;
 
     @GlobalTransactional
     @Override
@@ -40,5 +52,19 @@ public class UserInfoServiceImpl extends ServiceImpl<UserInfoMapper, UserInfo> i
         UserInfoVo userInfoVo = new UserInfoVo();
         BeanUtils.copyProperties(userInfo, userInfoVo);
         return userInfoVo;
+    }
+
+    @Override
+    public Boolean getPaidAlbumStat(Long albumId, Long userId) {
+        return this.userPaidAlbumMapper.selectCount(Wrappers.lambdaQuery(UserPaidAlbum.class)
+                .eq(UserPaidAlbum::getAlbumId, albumId)
+                .eq(UserPaidAlbum::getUserId, userId)) > 0;
+    }
+
+    @Override
+    public List<UserPaidTrack> getPaidTracksByAlbumIdAndUserId(Long albumId, Long userId) {
+        return this.userPaidTrackMapper.selectList(Wrappers.lambdaQuery(UserPaidTrack.class)
+                .eq(UserPaidTrack::getAlbumId, albumId)
+                .eq(UserPaidTrack::getUserId, userId));
     }
 }
