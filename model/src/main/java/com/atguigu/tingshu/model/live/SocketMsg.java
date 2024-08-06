@@ -1,4 +1,5 @@
-import com.atguigu.tingshu.model.live.FromUser;
+package com.atguigu.tingshu.model.live;
+
 import lombok.Data;
 import lombok.Getter;
 
@@ -11,11 +12,11 @@ public class SocketMsg {
     @Getter
     public enum MsgTypeEnum {
 
-        HEART_BEAT("0","心跳信息"),
-        PUBLIC_MSG("1","公共聊天消息"),
-        JOIN_CHAT("2","加入直播间"),
-        CLOSE_SOCKET("3","退出直播间"),
-        TOKEN_INVALID("-1","token无效"),
+        HEART_BEAT("0", "心跳信息"),
+        PUBLIC_MSG("1", "公共聊天消息"),
+        JOIN_CHAT("2", "加入直播间"),
+        CLOSE_SOCKET("3", "退出直播间"),
+        TOKEN_INVALID("-1", "token无效"),
         ;
 
         private String code;

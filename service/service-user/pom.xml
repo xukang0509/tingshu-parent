@@ -18,11 +18,11 @@
     </properties>
 
     <dependencies>
-        <dependency>
+        <!--<dependency>
             <groupId>com.atguigu.tingshu</groupId>
             <artifactId>kafka-util</artifactId>
             <version>1.0</version>
-        </dependency>
+        </dependency>-->
         <!--<dependency>
             <groupId>com.github.binarywang</groupId>
             <artifactId>weixin-java-miniapp</artifactId>
@@ -45,6 +45,12 @@
         <dependency>
             <groupId>io.seata</groupId>
             <artifactId>seata-spring-boot-starter</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.atguigu.tingshu</groupId>
+            <artifactId>rabbitmq-util</artifactId>
+            <version>1.0</version>
         </dependency>
     </dependencies>
 

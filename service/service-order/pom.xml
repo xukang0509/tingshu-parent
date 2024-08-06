@@ -18,9 +18,14 @@
     </properties>
 
     <dependencies>
-        <dependency>
+        <!--<dependency>
             <groupId>com.atguigu.tingshu</groupId>
             <artifactId>kafka-util</artifactId>
+            <version>1.0</version>
+        </dependency>-->
+        <dependency>
+            <groupId>com.atguigu.tingshu</groupId>
+            <artifactId>rabbitmq-util</artifactId>
             <version>1.0</version>
         </dependency>
         <dependency>

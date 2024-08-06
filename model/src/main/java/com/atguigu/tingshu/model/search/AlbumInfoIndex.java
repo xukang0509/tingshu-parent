@@ -24,7 +24,7 @@ public class AlbumInfoIndex implements Serializable {
     private Long id;
 
     // 专辑标题
-    //  es 中能分词的字段，这个字段数据类型必须是 text！keyword 不分词！ analyzer = "ik_max_word"
+    // es 中能分词的字段，这个字段数据类型必须是 text！keyword 不分词！ analyzer = "ik_max_word"
     @Field(type = FieldType.Text, analyzer = "ik_max_word")
     private String albumTitle;
 

@@ -190,8 +190,9 @@ public class TrackInfoServiceImpl extends ServiceImpl<TrackInfoMapper, TrackInfo
         Assert.notNull(albumInfo, "专辑为空！！");
         // 3.判断付费类型
         String payType = albumInfo.getPayType();
-        // 3.1 如果是免费，直接返回声音分页列表（不显示付费标签）
-        if (SystemConstant.ALBUM_PAY_TYPE_FREE.equals(payType)) {
+        // 3.1 如果是免费 或者 当前专辑所属的用户是当前登录用户，直接返回声音分页列表（不显示付费标签）
+        if (SystemConstant.ALBUM_PAY_TYPE_FREE.equals(payType)
+                || Objects.equals(albumInfo.getUserId(), AuthContextHolder.getUserId())) {
             return albumTrackListVoPage;
         }
 
