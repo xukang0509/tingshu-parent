@@ -75,8 +75,6 @@ public class WebSocketLocalContainer {
      * @param socketMsg 消息体
      */
     public static void sendMsg(SocketMsg socketMsg) {
-        // 心跳消息直接跳过
-        if (SocketMsg.MsgTypeEnum.HEART_BEAT.getCode().equals(socketMsg.getMsgType())) return;
         // 获取同一直播间的用户id集合
         Set<Long> userIds = WebSocketLocalContainer.getUserIds(socketMsg.getLiveRoomId());
         if (CollectionUtils.isEmpty(userIds)) return;

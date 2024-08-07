@@ -1,6 +1,5 @@
 package com.atguigu.tingshu.search.service.impl;
 
-import com.alibaba.fastjson.JSONObject;
 import com.atguigu.tingshu.album.client.AlbumInfoFeignClient;
 import com.atguigu.tingshu.album.client.CategoryFeignClient;
 import com.atguigu.tingshu.album.client.TrackInfoFeignClient;
@@ -10,6 +9,7 @@ import com.atguigu.tingshu.model.album.BaseCategoryView;
 import com.atguigu.tingshu.search.service.ItemService;
 import com.atguigu.tingshu.user.client.UserInfoFeignClient;
 import com.atguigu.tingshu.vo.album.AlbumStatVo;
+import com.atguigu.tingshu.vo.search.AlbumItemVo;
 import com.atguigu.tingshu.vo.user.UserInfoVo;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -41,15 +41,15 @@ public class ItemServiceImpl implements ItemService {
 
 
     @Override
-    public JSONObject loadItem(Long albumId) {
-        JSONObject data = new JSONObject();
+    public AlbumItemVo loadItem(Long albumId) {
+        AlbumItemVo data = new AlbumItemVo();
 
         // 根据专辑id查询专辑
         CompletableFuture<AlbumInfo> albumInfoCompletableFuture = CompletableFuture.supplyAsync(() -> {
             Result<AlbumInfo> albumInfoRes = this.albumInfoFeignClient.getAlbumInfo(albumId);
             Assert.notNull(albumInfoRes, "查询专辑信息失败！");
             AlbumInfo albumInfo = albumInfoRes.getData();
-            data.put("albumInfo", albumInfo);
+            data.setAlbumInfo(albumInfo);
             return albumInfo;
         }, executorService);
 
@@ -58,7 +58,7 @@ public class ItemServiceImpl implements ItemService {
             Result<UserInfoVo> userInfoRes = this.userInfoFeignClient.getUserInfoById(albumInfo.getUserId());
             Assert.notNull(userInfoRes, "获取用户信息失败！");
             UserInfoVo userInfoVo = userInfoRes.getData();
-            data.put("announcer", userInfoVo);
+            data.setAnnouncer(userInfoVo);
         }, executorService);
 
         // 根据三级分类id查询分类信息
@@ -66,7 +66,7 @@ public class ItemServiceImpl implements ItemService {
             Result<BaseCategoryView> categoryViewRes = this.categoryFeignClient.findBaseCategoryViewByCategory3Id(albumInfo.getCategory3Id());
             Assert.notNull(categoryViewRes, "根据三级分类id获取分类信息失败！");
             BaseCategoryView baseCategoryView = categoryViewRes.getData();
-            data.put("baseCategoryView", baseCategoryView);
+            data.setBaseCategoryView(baseCategoryView);
         }, executorService);
 
         // 根据专辑id查询专辑统计信息s
@@ -74,7 +74,7 @@ public class ItemServiceImpl implements ItemService {
             Result<AlbumStatVo> albumStatsRes = this.albumInfoFeignClient.getAlbumStatsByAlbumId(albumId);
             Assert.notNull(albumStatsRes, "根据专辑Id获取统计信息列表失败！");
             AlbumStatVo albumStatVo = albumStatsRes.getData();
-            data.put("albumStatVo", albumStatVo);
+            data.setAlbumStatVo(albumStatVo);
         }, executorService);
 
         CompletableFuture.allOf(

@@ -17,7 +17,7 @@ public class RedisConstant {
     // 定义变量，记录空对象的缓存过期时间
     public static final long ALBUM_TEMPORARY_TIMEOUT = 10 * 60;
     //  布隆过滤器使用！
-    public static final String ALBUM_BLOOM_FILTER="album:bloom:filter";
+    public static final String ALBUM_BLOOM_FILTER = "album:bloom:filter";
 
     public static final String CACHE_INFO_PREFIX = "cache:info:";
     public static final String CACHE_LOCK_SUFFIX = "cache:lock:";
@@ -42,4 +42,7 @@ public class RedisConstant {
 
     public static final String RANKING_KEY_PREFIX = "ranking:";
     public static final String ALBUM_STAT_ENDTIME = "album:stat:endTime";
+
+    // 直播发布订阅模式，即时通讯中接收消息的通道名
+    public static final String LIVE_MESSAGE_CHANNEL = "tingshu:live:message";
 }

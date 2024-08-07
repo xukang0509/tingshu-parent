@@ -1,5 +1,6 @@
 package com.atguigu.tingshu.live.config;
 
+import com.atguigu.tingshu.common.constant.RedisConstant;
 import com.atguigu.tingshu.live.util.WebSocketLocalContainer;
 import com.atguigu.tingshu.model.live.SocketMsg;
 import jakarta.annotation.Resource;
@@ -32,7 +33,7 @@ public class RedisListenerConfig {
         // 可以同时订阅多个消息通道
         // 订阅名称叫 tingshu:live:message 的通道, 类似 Redis 中的 subscribe 命令
         // new PatternTopic("tingshu:*") 类似 Redis 的 pSubscribe 命令
-        listenerContainer.addMessageListener(messageListener, new ChannelTopic("tingshu:live:message"));
+        listenerContainer.addMessageListener(messageListener, new ChannelTopic(RedisConstant.LIVE_MESSAGE_CHANNEL));
         return listenerContainer;
     }
 
@@ -42,13 +43,12 @@ public class RedisListenerConfig {
     @Bean
     public MessageListener messageListener() {
         return (Message message, byte[] pattern) -> {
-            // 消息来自于那个通道
-            String channel = new String(pattern);
-            log.info("消息通道: {}", channel);
+            // 消息来自那个通道
+            // String channel = new String(pattern);
+            // log.info("消息通道: {}", channel);
             // System.out.println("消息通道: " + new String(message.getChannel()));
             // 消息内容
             SocketMsg msg = (SocketMsg) redisTemplate.getValueSerializer().deserialize(message.getBody());
-            log.info("消息内容: {}", msg);
             // 发送消息
             WebSocketLocalContainer.sendMsg(msg);
         };

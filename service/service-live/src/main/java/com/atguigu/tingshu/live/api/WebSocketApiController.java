@@ -15,6 +15,7 @@ import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.StringUtils;
 
 /**
  * WebSocket常用注解：
@@ -62,8 +63,9 @@ public class WebSocketApiController {
         socketMsg.setFromUser(fromUser);
         socketMsg.setTime(new DateTime().toString("HH:mm:ss"));
         // 发送消息
+        log.info("建立连接；{}", socketMsg);
+        redisTemplate.convertAndSend(RedisConstant.LIVE_MESSAGE_CHANNEL, socketMsg);
         //WebSocketLocalContainer.sendMsg(socketMsg);
-        redisTemplate.convertAndSend("tingshu:live:message", socketMsg);
     }
 
     @OnClose
@@ -86,20 +88,26 @@ public class WebSocketApiController {
         socketMsg.setFromUser(fromUser);
         socketMsg.setTime(new DateTime().toString("HH:mm:ss"));
         // 发送消息
+        log.info("关闭连接；{}", socketMsg);
+        redisTemplate.convertAndSend(RedisConstant.LIVE_MESSAGE_CHANNEL, socketMsg);
         //WebSocketLocalContainer.sendMsg(socketMsg);
-        redisTemplate.convertAndSend("tingshu:live:message", socketMsg);
     }
 
     @OnMessage
     public void onMessage(Session session, String msg) {
-        log.info("获取了消息。消息内容：{}", msg);
+        if (!StringUtils.hasText(msg)) return;
+        SocketMsg socketMsg = JSON.parseObject(msg, SocketMsg.class);
+        // 心跳消息直接跳过
+        if (SocketMsg.MsgTypeEnum.HEART_BEAT.getCode().equals(socketMsg.getMsgType())) return;
+        socketMsg.setTime(new DateTime().toString("HH:mm:ss"));
+        log.info("消息内容: {}", socketMsg);
+        redisTemplate.convertAndSend(RedisConstant.LIVE_MESSAGE_CHANNEL, socketMsg);
         //WebSocketLocalContainer.sendMsg(JSON.parseObject(msg, SocketMsg.class));
-        redisTemplate.convertAndSend("tingshu:live:message", JSON.parseObject(msg, SocketMsg.class));
     }
 
     @OnError
     public void onError(Session session, Throwable err) {
         log.info("连接出错。错误信息：{}", err.getMessage());
-        err.printStackTrace();
+        throw new RuntimeException(err);
     }
 }

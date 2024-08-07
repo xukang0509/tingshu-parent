@@ -1,6 +1,6 @@
 package com.atguigu.tingshu.search.service;
 
-import com.alibaba.fastjson.JSONObject;
+import com.atguigu.tingshu.vo.search.AlbumItemVo;
 
 public interface ItemService {
     /**
@@ -9,5 +9,5 @@ public interface ItemService {
      * @param albumId 专辑id
      * @return 专辑详情
      */
-    JSONObject loadItem(Long albumId);
+    AlbumItemVo loadItem(Long albumId);
 }

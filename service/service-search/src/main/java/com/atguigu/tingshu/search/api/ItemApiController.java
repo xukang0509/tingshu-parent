@@ -1,9 +1,9 @@
 package com.atguigu.tingshu.search.api;
 
-import com.alibaba.fastjson.JSONObject;
 import com.atguigu.tingshu.common.login.AuthLogin;
 import com.atguigu.tingshu.common.result.Result;
 import com.atguigu.tingshu.search.service.ItemService;
+import com.atguigu.tingshu.vo.search.AlbumItemVo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("api/search/albumInfo")
 @SuppressWarnings({"unchecked", "rawtypes"})
-public class itemApiController {
+public class ItemApiController {
 
     @Resource
     private ItemService itemService;
@@ -25,7 +25,7 @@ public class itemApiController {
     @AuthLogin(required = false)
     @Operation(summary = "加载专辑详情")
     @GetMapping("{albumId}")
-    public Result<JSONObject> loadItem(@PathVariable("albumId") Long albumId) {
+    public Result<AlbumItemVo> loadItem(@PathVariable("albumId") Long albumId) {
         return Result.ok(this.itemService.loadItem(albumId));
     }
 }
