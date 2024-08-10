@@ -328,7 +328,7 @@ public class TrackInfoServiceImpl extends ServiceImpl<TrackInfoMapper, TrackInfo
                         Result<UserInfoVo> userInfoVoResult = this.userInfoFeignClient.getUserInfoById(userId);
                         Assert.notNull(userInfoVoResult, "没有获取到用户信息");
                         UserInfoVo userInfoVo = userInfoVoResult.getData();
-                        if (userInfoVo.getIsVip() == 0 || userInfoVo.getVipExpireTime().before(new Date()) ||
+                        if (userInfoVo == null || userInfoVo.getIsVip() == 0 || userInfoVo.getVipExpireTime().before(new Date()) ||
                                 SystemConstant.ALBUM_PAY_TYPE_REQUIRE.equals(albumInfo.getPayType())) {
                             throw new GuiguException(ResultCodeEnum.NO_BUY_NOT_SEE);
                         }
@@ -341,7 +341,7 @@ public class TrackInfoServiceImpl extends ServiceImpl<TrackInfoMapper, TrackInfo
         Result<BigDecimal> trackBreakSecondRes = this.userListenProcessFeignClient.getTrackBreakSecond(trackId);
         Assert.notNull(trackBreakSecondRes, "获取播放进度失败");
         BigDecimal breakSecond = trackBreakSecondRes.getData();
-        String playToken = this.vodService.getPlayToken(trackInfo.getMediaFileId(), trackInfo.getMediaType());
+        String playToken = this.vodService.getPlayToken(trackInfo.getMediaFileId());
         JSONObject map = new JSONObject();
         map.put("playToken", playToken);
         map.put("mediaFileId", trackInfo.getMediaFileId());
@@ -356,11 +356,7 @@ public class TrackInfoServiceImpl extends ServiceImpl<TrackInfoMapper, TrackInfo
                 .select(TrackInfo::getId)
                 .last("limit 1")
         );
-        if (null != nextTrackInfo) {
-            map.put("nextTrackId", nextTrackInfo.getId());
-        } else {
-            map.put("nextTrackId", 0L);
-        }
+        map.put("nextTrackId", nextTrackInfo != null ? nextTrackInfo.getId() : 0L);
         return map;
     }
 }

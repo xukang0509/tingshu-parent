@@ -96,19 +96,19 @@ public class UserListenProcessServiceImpl implements UserListenProcessService {
             // 计算过期时间
             long expireTime = ChronoUnit.SECONDS.between(LocalDateTime.now(), nextDay);
             this.redisTemplate.expire(key, expireTime, TimeUnit.SECONDS);
-
+            
             // 组装消息
-            StatMqVo trackStatMqVo = new StatMqVo();
+            StatMqVo statMqVo = new StatMqVo();
             // 防止重复消费的唯一标识
-            trackStatMqVo.setBusinessNo(UUID.randomUUID().toString().replace("-", ""));
-            trackStatMqVo.setAlbumId(userListenProcessVo.getAlbumId());
-            trackStatMqVo.setTrackId(trackId);
-            trackStatMqVo.setTrackStatType(SystemConstant.TRACK_STAT_PLAY);
-            trackStatMqVo.setAlbumStatType(SystemConstant.ALBUM_STAT_PLAY);
-            trackStatMqVo.setCount(1);
+            statMqVo.setBusinessNo(UUID.randomUUID().toString().replace("-", ""));
+            statMqVo.setAlbumId(userListenProcessVo.getAlbumId());
+            statMqVo.setTrackId(trackId);
+            statMqVo.setTrackStatType(SystemConstant.TRACK_STAT_PLAY);
+            statMqVo.setAlbumStatType(SystemConstant.ALBUM_STAT_PLAY);
+            statMqVo.setCount(1);
             // 发送消息
             rabbitService.sendMessage(RabbitMqConstant.EXCHANGE_STAT_UPDATE,
-                    RabbitMqConstant.ROUTING_STAT_UPDATE, JSONObject.toJSONString(trackStatMqVo));
+                    RabbitMqConstant.ROUTING_STAT_UPDATE, JSONObject.toJSONString(statMqVo));
         }
     }
 

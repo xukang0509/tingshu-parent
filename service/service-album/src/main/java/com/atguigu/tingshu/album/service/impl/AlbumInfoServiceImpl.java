@@ -6,6 +6,7 @@ import com.atguigu.tingshu.album.mapper.AlbumStatMapper;
 import com.atguigu.tingshu.album.service.AlbumInfoService;
 import com.atguigu.tingshu.album.service.MinioService;
 import com.atguigu.tingshu.common.constant.RabbitMqConstant;
+import com.atguigu.tingshu.common.constant.RedisConstant;
 import com.atguigu.tingshu.common.constant.SystemConstant;
 import com.atguigu.tingshu.common.service.RabbitService;
 import com.atguigu.tingshu.common.util.AuthContextHolder;
@@ -22,7 +23,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -32,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -53,6 +58,12 @@ public class AlbumInfoServiceImpl extends ServiceImpl<AlbumInfoMapper, AlbumInfo
 
     @Resource
     private RabbitService rabbitService;
+
+    @Resource
+    private RedisTemplate redisTemplate;
+
+    @Resource
+    private RedissonClient redissonClient;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -136,13 +147,38 @@ public class AlbumInfoServiceImpl extends ServiceImpl<AlbumInfoMapper, AlbumInfo
 
     @Override
     public AlbumInfo getAlbumInfoById(Long albumId) {
-        AlbumInfo albumInfo = this.albumInfoMapper.selectById(albumId);
-        if (!Objects.isNull(albumInfo)) {
-            List<AlbumAttributeValue> albumAttributeValueList = this.albumAttributeValueMapper.selectList(Wrappers.lambdaQuery(AlbumAttributeValue.class)
-                    .eq(AlbumAttributeValue::getAlbumId, albumId));
-            albumInfo.setAlbumAttributeValueVoList(albumAttributeValueList);
+        // 先查询缓存，如果命中则直接返回
+        String key = RedisConstant.ALBUM_INFO_PREFIX + albumId;
+        AlbumInfo albumInfo = (AlbumInfo) this.redisTemplate.opsForValue().get(key);
+        if (albumInfo != null) return albumInfo;
+
+        // 为了防止缓存击穿，添加分布式锁
+        RLock lock = this.redissonClient.getLock(RedisConstant.ALBUM_LOCK_SUFFIX + albumId);
+        lock.lock(5, TimeUnit.SECONDS);
+        try {
+            // 在等待获取锁的过程中，可能有其他请求提前获取了锁，并把数据放入了缓存。所以为了提高性能再次查询缓存，如果命中则直接返回
+            albumInfo = (AlbumInfo) this.redisTemplate.opsForValue().get(key);
+            if (albumInfo != null) return albumInfo;
+            // 查询数据库，放入缓存
+            albumInfo = this.albumInfoMapper.selectById(albumId);
+            if (!Objects.isNull(albumInfo)) {
+                List<AlbumAttributeValue> albumAttributeValueList = this.albumAttributeValueMapper.selectList(Wrappers.lambdaQuery(AlbumAttributeValue.class)
+                        .eq(AlbumAttributeValue::getAlbumId, albumId));
+                albumInfo.setAlbumAttributeValueVoList(albumAttributeValueList);
+            }
+            // 放入缓存
+            if (Objects.isNull(albumInfo)) {
+                // 缓存空数据，解决缓存穿透问题
+                this.redisTemplate.opsForValue().set(key, albumInfo, RedisConstant.ALBUM_TEMPORARY_TIMEOUT, TimeUnit.SECONDS);
+            } else {
+                // 随机化过期时间，解决缓存雪崩问题
+                this.redisTemplate.opsForValue().set(key, albumInfo,
+                        RedisConstant.ALBUM_TIMEOUT + new Random().nextInt(600), TimeUnit.SECONDS);
+            }
+            return albumInfo;
+        } finally {
+            lock.unlock();
         }
-        return albumInfo;
     }
 
     @Transactional(rollbackFor = Exception.class)

@@ -106,7 +106,7 @@ public class VodServiceImpl implements VodService {
     }
 
     @Override
-    public String getPlayToken(String mediaFileId, String mediaType) {
+    public String getPlayToken(String mediaFileId) {
         Integer AppId = vodConstantProperties.getAppId();
         String FileId = mediaFileId;
         String AudioVideoType = "Original";

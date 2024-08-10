@@ -104,6 +104,7 @@ public class TrackInfoApiController {
         return Result.ok(this.trackInfoService.getTrackStatVo(trackId));
     }
 
+    // http://127.0.0.1:8500/api/album/trackInfo/getPlayToken/51951
     @AuthLogin(required = false)
     @Operation(summary = "获取声音播放凭证")
     @GetMapping("getPlayToken/{trackId}")

@@ -68,18 +68,22 @@ public class TrackReceiver {
                 TrackStat trackStat = this.trackStatMapper.selectOne(Wrappers.lambdaQuery(TrackStat.class)
                         .eq(TrackStat::getTrackId, statMqVo.getTrackId())
                         .eq(TrackStat::getStatType, statMqVo.getTrackStatType()));
-                trackStat.setStatNum(trackStat.getStatNum() + statMqVo.getCount());
-                trackStat.setUpdateTime(new Date());
-                this.trackStatMapper.updateById(trackStat);
+                if (trackStat != null) {
+                    trackStat.setStatNum(trackStat.getStatNum() + statMqVo.getCount());
+                    trackStat.setUpdateTime(new Date());
+                    this.trackStatMapper.updateById(trackStat);
+                }
             }
             // 更新专辑统计信息
             if (statMqVo.getAlbumId() != null && StringUtils.isNotBlank(statMqVo.getAlbumStatType())) {
                 AlbumStat albumStat = this.albumStatMapper.selectOne(Wrappers.lambdaQuery(AlbumStat.class)
                         .eq(AlbumStat::getAlbumId, statMqVo.getAlbumId())
                         .eq(AlbumStat::getStatType, statMqVo.getAlbumStatType()));
-                albumStat.setStatNum(albumStat.getStatNum() + statMqVo.getCount());
-                albumStat.setUpdateTime(new Date());
-                this.albumStatMapper.updateById(albumStat);
+                if (albumStat != null) {
+                    albumStat.setStatNum(albumStat.getStatNum() + statMqVo.getCount());
+                    albumStat.setUpdateTime(new Date());
+                    this.albumStatMapper.updateById(albumStat);
+                }
             }
             // 手动应答
             channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);

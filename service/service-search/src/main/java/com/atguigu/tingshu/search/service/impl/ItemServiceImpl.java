@@ -2,7 +2,6 @@ package com.atguigu.tingshu.search.service.impl;
 
 import com.atguigu.tingshu.album.client.AlbumInfoFeignClient;
 import com.atguigu.tingshu.album.client.CategoryFeignClient;
-import com.atguigu.tingshu.album.client.TrackInfoFeignClient;
 import com.atguigu.tingshu.common.result.Result;
 import com.atguigu.tingshu.model.album.AlbumInfo;
 import com.atguigu.tingshu.model.album.BaseCategoryView;
@@ -34,15 +33,11 @@ public class ItemServiceImpl implements ItemService {
     private UserInfoFeignClient userInfoFeignClient;
 
     @Resource
-    private TrackInfoFeignClient trackInfoFeignClient;
-
-    @Resource
     private ExecutorService executorService;
-
 
     @Override
     public AlbumItemVo loadItem(Long albumId) {
-        AlbumItemVo data = new AlbumItemVo();
+        final AlbumItemVo data = new AlbumItemVo();
 
         // 根据专辑id查询专辑
         CompletableFuture<AlbumInfo> albumInfoCompletableFuture = CompletableFuture.supplyAsync(() -> {
@@ -55,6 +50,7 @@ public class ItemServiceImpl implements ItemService {
 
         // 根据用户id查询主播信息
         CompletableFuture<Void> announcerCompletableFuture = albumInfoCompletableFuture.thenAcceptAsync(albumInfo -> {
+            if (albumInfo == null) return;
             Result<UserInfoVo> userInfoRes = this.userInfoFeignClient.getUserInfoById(albumInfo.getUserId());
             Assert.notNull(userInfoRes, "获取用户信息失败！");
             UserInfoVo userInfoVo = userInfoRes.getData();
@@ -63,6 +59,7 @@ public class ItemServiceImpl implements ItemService {
 
         // 根据三级分类id查询分类信息
         CompletableFuture<Void> categoryViewCompletableFuture = albumInfoCompletableFuture.thenAcceptAsync(albumInfo -> {
+            if (albumInfo == null) return;
             Result<BaseCategoryView> categoryViewRes = this.categoryFeignClient.findBaseCategoryViewByCategory3Id(albumInfo.getCategory3Id());
             Assert.notNull(categoryViewRes, "根据三级分类id获取分类信息失败！");
             BaseCategoryView baseCategoryView = categoryViewRes.getData();
