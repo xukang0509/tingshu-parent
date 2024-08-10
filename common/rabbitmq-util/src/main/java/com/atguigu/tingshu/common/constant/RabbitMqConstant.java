@@ -16,15 +16,19 @@ public class RabbitMqConstant {
     public static final String QUEUE_ALBUM_LOWER = "tingshu.album.lower";
     public static final String ROUTING_ALBUM_LOWER = "tingshu.album.lower";
 
+    /**
+     * 更新 声音及专辑 的统计状态
+     */
+    public static final String EXCHANGE_STAT_UPDATE = "tingshu.stat.update";
+    public static final String QUEUE_STAT_UPDATE = "tingshu.stat.update";
+    public static final String ROUTING_STAT_UPDATE = "tingshu.stat.update";
+
+
+    /*==============================================================================*/
 
     public static final String QUEUE_ALBUM_STAT_UPDATE = "tingshu.album.stat.update";
     public static final String QUEUE_ALBUM_ES_STAT_UPDATE = "tingshu.album.es.stat.update";
     public static final String QUEUE_ALBUM_RANKING_UPDATE = "tingshu.album.ranking.update";
-
-    /**
-     * 声音
-     */
-    public static final String QUEUE_TRACK_STAT_UPDATE = "tingshu.track.stat.update";
 
     /**
      * 取消订单

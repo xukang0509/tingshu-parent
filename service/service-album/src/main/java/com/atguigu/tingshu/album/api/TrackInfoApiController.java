@@ -1,15 +1,13 @@
 package com.atguigu.tingshu.album.api;
 
+import com.alibaba.fastjson.JSONObject;
 import com.atguigu.tingshu.album.service.TrackInfoService;
 import com.atguigu.tingshu.album.service.VodService;
 import com.atguigu.tingshu.common.login.AuthLogin;
 import com.atguigu.tingshu.common.result.Result;
 import com.atguigu.tingshu.model.album.TrackInfo;
 import com.atguigu.tingshu.query.album.TrackInfoQuery;
-import com.atguigu.tingshu.vo.album.AlbumTrackListVo;
-import com.atguigu.tingshu.vo.album.TrackInfoVo;
-import com.atguigu.tingshu.vo.album.TrackListVo;
-import com.atguigu.tingshu.vo.album.VodFileUploadVo;
+import com.atguigu.tingshu.vo.album.*;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.v3.oas.annotations.Operation;
@@ -97,6 +95,20 @@ public class TrackInfoApiController {
             @PathVariable("pageNum") Integer pageNum,
             @PathVariable("pageSize") Integer pageSize) {
         return Result.ok(this.trackInfoService.findAlbumTrackPage(albumId, new Page<AlbumTrackListVo>(pageNum, pageSize)));
+    }
+
+    // http://127.0.0.1:8500/api/album/trackInfo/getTrackStatVo/51950
+    @Operation(summary = "查询声音统计信息")
+    @GetMapping("getTrackStatVo/{trackId}")
+    public Result<TrackStatVo> getTrackStatVo(@PathVariable Long trackId) {
+        return Result.ok(this.trackInfoService.getTrackStatVo(trackId));
+    }
+
+    @AuthLogin(required = false)
+    @Operation(summary = "获取声音播放凭证")
+    @GetMapping("getPlayToken/{trackId}")
+    public Result<JSONObject> getPlayToken(@PathVariable Long trackId) {
+        return Result.ok(this.trackInfoService.getPlayToken(trackId));
     }
 }
 

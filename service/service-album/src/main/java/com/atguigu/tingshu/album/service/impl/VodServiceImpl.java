@@ -5,6 +5,8 @@ import com.atguigu.tingshu.album.service.VodService;
 import com.atguigu.tingshu.common.util.UploadFileUtil;
 import com.atguigu.tingshu.vo.album.TrackMediaInfoVo;
 import com.atguigu.tingshu.vo.album.VodFileUploadVo;
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
 import com.qcloud.vod.VodUploadClient;
 import com.qcloud.vod.model.VodUploadRequest;
 import com.qcloud.vod.model.VodUploadResponse;
@@ -17,6 +19,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Date;
+import java.util.HashMap;
 
 @Slf4j
 @Service
@@ -98,5 +103,32 @@ public class VodServiceImpl implements VodService {
         } catch (TencentCloudSDKException e) {
             log.error(e.toString());
         }
+    }
+
+    @Override
+    public String getPlayToken(String mediaFileId, String mediaType) {
+        Integer AppId = vodConstantProperties.getAppId();
+        String FileId = mediaFileId;
+        String AudioVideoType = "Original";
+        Integer RawAdaptiveDefinition = 10;
+        Integer ImageSpriteDefinition = 10;
+        Integer CurrentTime = Math.toIntExact(new Date().getTime() / 1000);//播放器签名的派发时间为
+        Integer PsignExpire = CurrentTime + 60 * 60 * 2;//播放器签名的过期时间，根据录制最长时间设置，如：两小时
+        String UrlTimeExpire = String.valueOf(PsignExpire);//防盗链的过期时间
+        String PlayKey = vodConstantProperties.getPlayKey();//播放密钥
+        HashMap<String, Object> urlAccessInfo = new HashMap<>();
+        urlAccessInfo.put("t", UrlTimeExpire);
+        HashMap<String, Object> contentInfo = new HashMap<>();
+        contentInfo.put("audioVideoType", AudioVideoType);
+        contentInfo.put("rawAdaptiveDefinition", RawAdaptiveDefinition);
+        contentInfo.put("imageSpriteDefinition", ImageSpriteDefinition);
+
+        Algorithm algorithm = Algorithm.HMAC256(PlayKey);
+        String token = JWT.create().withClaim("appId", AppId).withClaim("fileId", FileId)
+                .withClaim("contentInfo", contentInfo)
+                .withClaim("currentTimeStamp", CurrentTime).withClaim("expireTimeStamp", PsignExpire)
+                .withClaim("urlAccessInfo", urlAccessInfo).sign(algorithm);
+        log.info("token:" + token);
+        return token;
     }
 }

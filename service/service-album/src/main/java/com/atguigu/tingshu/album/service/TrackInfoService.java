@@ -1,10 +1,12 @@
 package com.atguigu.tingshu.album.service;
 
+import com.alibaba.fastjson.JSONObject;
 import com.atguigu.tingshu.model.album.TrackInfo;
 import com.atguigu.tingshu.query.album.TrackInfoQuery;
 import com.atguigu.tingshu.vo.album.AlbumTrackListVo;
 import com.atguigu.tingshu.vo.album.TrackInfoVo;
 import com.atguigu.tingshu.vo.album.TrackListVo;
+import com.atguigu.tingshu.vo.album.TrackStatVo;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -51,4 +53,20 @@ public interface TrackInfoService extends IService<TrackInfo> {
      * @return 用户专辑声音列表信息
      */
     IPage<AlbumTrackListVo> findAlbumTrackPage(Long albumId, Page<AlbumTrackListVo> page);
+
+    /**
+     * 查询声音统计信息
+     *
+     * @param trackId 声音id
+     * @return 声音统计信息
+     */
+    TrackStatVo getTrackStatVo(Long trackId);
+
+    /**
+     * 获取声音播放凭证
+     *
+     * @param trackId 声音id
+     * @return 播放凭证
+     */
+    JSONObject getPlayToken(Long trackId);
 }

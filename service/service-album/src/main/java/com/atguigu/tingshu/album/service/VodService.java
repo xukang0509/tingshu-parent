@@ -28,4 +28,13 @@ public interface VodService {
      * @param mediaFileId 媒体文件id
      */
     void removeTrackMedia(String mediaFileId);
+
+    /**
+     * 获取播放凭证
+     *
+     * @param mediaFileId 媒体文件的唯一标识
+     * @param mediaType   媒体类型
+     * @return 播放凭证
+     */
+    String getPlayToken(String mediaFileId, String mediaType);
 }

@@ -1,15 +1,19 @@
 package com.atguigu.tingshu.album.service.impl;
 
+import com.alibaba.fastjson.JSONObject;
+import com.atguigu.tingshu.album.config.VodConstantProperties;
 import com.atguigu.tingshu.album.mapper.AlbumInfoMapper;
 import com.atguigu.tingshu.album.mapper.TrackInfoMapper;
 import com.atguigu.tingshu.album.mapper.TrackStatMapper;
 import com.atguigu.tingshu.album.service.MinioService;
 import com.atguigu.tingshu.album.service.TrackInfoService;
 import com.atguigu.tingshu.album.service.VodService;
+import com.atguigu.tingshu.common.constant.RabbitMqConstant;
 import com.atguigu.tingshu.common.constant.SystemConstant;
 import com.atguigu.tingshu.common.execption.GuiguException;
 import com.atguigu.tingshu.common.result.Result;
 import com.atguigu.tingshu.common.result.ResultCodeEnum;
+import com.atguigu.tingshu.common.service.RabbitService;
 import com.atguigu.tingshu.common.util.AuthContextHolder;
 import com.atguigu.tingshu.model.album.AlbumInfo;
 import com.atguigu.tingshu.model.album.TrackInfo;
@@ -17,10 +21,8 @@ import com.atguigu.tingshu.model.album.TrackStat;
 import com.atguigu.tingshu.model.user.UserPaidTrack;
 import com.atguigu.tingshu.query.album.TrackInfoQuery;
 import com.atguigu.tingshu.user.client.UserInfoFeignClient;
-import com.atguigu.tingshu.vo.album.AlbumTrackListVo;
-import com.atguigu.tingshu.vo.album.TrackInfoVo;
-import com.atguigu.tingshu.vo.album.TrackListVo;
-import com.atguigu.tingshu.vo.album.TrackMediaInfoVo;
+import com.atguigu.tingshu.user.client.UserListenProcessFeignClient;
+import com.atguigu.tingshu.vo.album.*;
 import com.atguigu.tingshu.vo.user.UserInfoVo;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -37,7 +39,9 @@ import org.springframework.util.CollectionUtils;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -60,7 +64,16 @@ public class TrackInfoServiceImpl extends ServiceImpl<TrackInfoMapper, TrackInfo
     private UserInfoFeignClient userInfoFeignClient;
 
     @Resource
+    private UserListenProcessFeignClient userListenProcessFeignClient;
+
+    @Resource
     private MinioService minioService;
+
+    @Resource
+    private RabbitService rabbitService;
+
+    @Resource
+    private VodConstantProperties vodConstantProperties;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -95,6 +108,9 @@ public class TrackInfoServiceImpl extends ServiceImpl<TrackInfoMapper, TrackInfo
         if (!Objects.isNull(albumInfo)) {
             albumInfo.setIncludeTrackCount(albumInfo.getIncludeTrackCount() + 1);
             this.albumInfoMapper.updateById(albumInfo);
+            // es中数据更新
+            rabbitService.sendMessage(RabbitMqConstant.EXCHANGE_ALBUM_UPPER,
+                    RabbitMqConstant.ROUTING_ALBUM_UPPER, albumInfo.getId());
         }
         // 4.新增声音统计信息
         saveTrackStat(trackInfo.getId(), SystemConstant.TRACK_STAT_PLAY);
@@ -172,6 +188,9 @@ public class TrackInfoServiceImpl extends ServiceImpl<TrackInfoMapper, TrackInfo
         if (!Objects.isNull(albumInfo)) {
             albumInfo.setIncludeTrackCount(albumInfo.getIncludeTrackCount() - 1);
             this.albumInfoMapper.updateById(albumInfo);
+            // es中数据更新
+            rabbitService.sendMessage(RabbitMqConstant.EXCHANGE_ALBUM_UPPER,
+                    RabbitMqConstant.ROUTING_ALBUM_UPPER, albumInfo.getId());
         }
         // 删除音频信息
         this.vodService.removeTrackMedia(trackInfo.getMediaFileId());
@@ -263,5 +282,85 @@ public class TrackInfoServiceImpl extends ServiceImpl<TrackInfoMapper, TrackInfo
             }
         }
         return albumTrackListVoPage;
+    }
+
+    @Override
+    public TrackStatVo getTrackStatVo(Long trackId) {
+        List<TrackStat> trackStatList = this.trackStatMapper.selectList(Wrappers.lambdaQuery(TrackStat.class)
+                .eq(TrackStat::getTrackId, trackId));
+        Map<String, Integer> typeToNumMap = trackStatList.stream()
+                .collect(Collectors.toMap(TrackStat::getStatType, TrackStat::getStatNum));
+        TrackStatVo trackStatVo = new TrackStatVo();
+        trackStatVo.setPlayStatNum(typeToNumMap.get(SystemConstant.TRACK_STAT_PLAY));
+        trackStatVo.setCollectStatNum(typeToNumMap.get(SystemConstant.TRACK_STAT_COLLECT));
+        trackStatVo.setCommentStatNum(typeToNumMap.get(SystemConstant.TRACK_STAT_COMMENT));
+        trackStatVo.setPraiseStatNum(typeToNumMap.get(SystemConstant.TRACK_STAT_PRAISE));
+        return trackStatVo;
+    }
+
+    @Override
+    public JSONObject getPlayToken(Long trackId) {
+        TrackInfo trackInfo = this.trackInfoMapper.selectById(trackId);
+        Assert.notNull(trackInfo, "声音对象不能为空");
+        AlbumInfo albumInfo = this.albumInfoMapper.selectById(trackInfo.getAlbumId());
+        Assert.notNull(albumInfo, "专辑对象不能为空");
+
+        if (!SystemConstant.ALBUM_PAY_TYPE_FREE.equals(albumInfo.getPayType()) &&
+                trackInfo.getOrderNum() > albumInfo.getTracksForFree()) {
+            Long userId = AuthContextHolder.getUserId();
+            if (userId == null) {
+                throw new GuiguException(ResultCodeEnum.NO_BUY_NOT_SEE);
+            } else {
+                // 查询用户是否购买过专辑
+                Result<Boolean> paidAlbumStatRes = this.userInfoFeignClient.getPaidAlbumStat(albumInfo.getId());
+                Assert.notNull(paidAlbumStatRes, "没有获取到专辑购买信息");
+                Boolean isPaid = paidAlbumStatRes.getData();
+                // 如果没有订购过该专辑，则判断是否订购过该声音
+                if (isPaid == null || !isPaid) {
+                    // 查询用户购买过该专辑下的声音列表
+                    Result<List<UserPaidTrack>> userPaidTrackListRes = this.userInfoFeignClient.getPaidTracksByAlbumIdAndUserId(albumInfo.getId());
+                    Assert.notNull(userPaidTrackListRes, "没有获取到声音购买信息");
+                    List<UserPaidTrack> userPaidTrackList = userPaidTrackListRes.getData();
+                    // 没有订购过该声音
+                    if (CollectionUtils.isEmpty(userPaidTrackList) ||
+                            userPaidTrackList.stream().noneMatch(userPaidTrack -> Objects.equals(userPaidTrack.getTrackId(), trackId))) {
+                        // 查询用户信息
+                        Result<UserInfoVo> userInfoVoResult = this.userInfoFeignClient.getUserInfoById(userId);
+                        Assert.notNull(userInfoVoResult, "没有获取到用户信息");
+                        UserInfoVo userInfoVo = userInfoVoResult.getData();
+                        if (userInfoVo.getIsVip() == 0 || userInfoVo.getVipExpireTime().before(new Date()) ||
+                                SystemConstant.ALBUM_PAY_TYPE_REQUIRE.equals(albumInfo.getPayType())) {
+                            throw new GuiguException(ResultCodeEnum.NO_BUY_NOT_SEE);
+                        }
+                    }
+                }
+            }
+        }
+
+        // 获取播放进度
+        Result<BigDecimal> trackBreakSecondRes = this.userListenProcessFeignClient.getTrackBreakSecond(trackId);
+        Assert.notNull(trackBreakSecondRes, "获取播放进度失败");
+        BigDecimal breakSecond = trackBreakSecondRes.getData();
+        String playToken = this.vodService.getPlayToken(trackInfo.getMediaFileId(), trackInfo.getMediaType());
+        JSONObject map = new JSONObject();
+        map.put("playToken", playToken);
+        map.put("mediaFileId", trackInfo.getMediaFileId());
+        map.put("breakSecond", breakSecond);
+        map.put("appId", vodConstantProperties.getAppId());
+
+        //获取下一个播放声音
+        TrackInfo nextTrackInfo = this.trackInfoMapper.selectOne(Wrappers.lambdaQuery(TrackInfo.class)
+                .eq(TrackInfo::getAlbumId, trackInfo.getAlbumId())
+                .gt(TrackInfo::getOrderNum, trackInfo.getOrderNum())
+                .orderByAsc(TrackInfo::getOrderNum)
+                .select(TrackInfo::getId)
+                .last("limit 1")
+        );
+        if (null != nextTrackInfo) {
+            map.put("nextTrackId", nextTrackInfo.getId());
+        } else {
+            map.put("nextTrackId", 0L);
+        }
+        return map;
     }
 }
