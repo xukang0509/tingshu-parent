@@ -83,7 +83,7 @@ public class UserListenProcessServiceImpl implements UserListenProcessService {
         }
         this.mongoTemplate.save(userListenProcess, MongoUtil.getCollectionName(MongoUtil.MongoCollectionEnum.USER_LISTEN_PROCESS, userId));
 
-        // 判断是否已经统计过：同一个用户同一个声音每天只记录一次播放量
+        // 判断是否已经统计过：同一个用户同一个声音同一天只记录一次统计信息
         String key = "user:track:" + new DateTime().toString("yyyy-MM-dd") + ":" + userId;
         Boolean isExist = this.redisTemplate.opsForValue().getBit(key, trackId);
         // 如果不存在，则记录为已统计并发送消息异步统计
@@ -96,7 +96,7 @@ public class UserListenProcessServiceImpl implements UserListenProcessService {
             // 计算过期时间
             long expireTime = ChronoUnit.SECONDS.between(LocalDateTime.now(), nextDay);
             this.redisTemplate.expire(key, expireTime, TimeUnit.SECONDS);
-            
+
             // 组装消息
             StatMqVo statMqVo = new StatMqVo();
             // 防止重复消费的唯一标识

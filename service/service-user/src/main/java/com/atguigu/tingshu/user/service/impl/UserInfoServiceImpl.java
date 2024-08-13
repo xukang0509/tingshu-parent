@@ -1,5 +1,6 @@
 package com.atguigu.tingshu.user.service.impl;
 
+import com.atguigu.tingshu.common.cache.TingShuCache;
 import com.atguigu.tingshu.model.user.UserInfo;
 import com.atguigu.tingshu.model.user.UserPaidAlbum;
 import com.atguigu.tingshu.model.user.UserPaidTrack;
@@ -46,6 +47,7 @@ public class UserInfoServiceImpl extends ServiceImpl<UserInfoMapper, UserInfo> i
         return loginClient.execute("1", loginForm);
     }
 
+    @TingShuCache(prefix = "user:info:", lockPrefix = "user:lock:")
     @Override
     public UserInfoVo getUserInfoById(Long id) {
         UserInfo userInfo = this.userInfoMapper.selectById(id);

@@ -67,7 +67,9 @@ public class TrackReceiver {
             if (statMqVo.getTrackId() != null && StringUtils.isNotBlank(statMqVo.getTrackStatType())) {
                 TrackStat trackStat = this.trackStatMapper.selectOne(Wrappers.lambdaQuery(TrackStat.class)
                         .eq(TrackStat::getTrackId, statMqVo.getTrackId())
-                        .eq(TrackStat::getStatType, statMqVo.getTrackStatType()));
+                        .eq(TrackStat::getStatType, statMqVo.getTrackStatType())
+                        .select(TrackStat::getId, TrackStat::getStatNum)
+                        .last("limit 1"));
                 if (trackStat != null) {
                     trackStat.setStatNum(trackStat.getStatNum() + statMqVo.getCount());
                     trackStat.setUpdateTime(new Date());
@@ -78,7 +80,9 @@ public class TrackReceiver {
             if (statMqVo.getAlbumId() != null && StringUtils.isNotBlank(statMqVo.getAlbumStatType())) {
                 AlbumStat albumStat = this.albumStatMapper.selectOne(Wrappers.lambdaQuery(AlbumStat.class)
                         .eq(AlbumStat::getAlbumId, statMqVo.getAlbumId())
-                        .eq(AlbumStat::getStatType, statMqVo.getAlbumStatType()));
+                        .eq(AlbumStat::getStatType, statMqVo.getAlbumStatType())
+                        .select(AlbumStat::getId, AlbumStat::getStatNum)
+                        .last("limit 1"));
                 if (albumStat != null) {
                     albumStat.setStatNum(albumStat.getStatNum() + statMqVo.getCount());
                     albumStat.setUpdateTime(new Date());

@@ -12,32 +12,30 @@ import org.springframework.util.StringUtils;
 
 /**
  * redisson配置信息
+ *
+ * @author xk
  */
 @Data
 @Configuration
 @ConfigurationProperties("spring.data.redis")
 public class RedissonConfig {
     private String host;
-
     private String password;
-
     private String port;
-
     private int timeout = 3000;
-    private static String ADDRESS_PREFIX = "redis://";
+    private static final String ADDRESS_PREFIX = "redis://";
 
     /**
      * 自动装配
      */
     @Bean
-    RedissonClient redissonSingle() {
+    public RedissonClient redissonClient() {
         Config config = new Config();
-
         if (!StringUtils.hasText(host)) {
             throw new RuntimeException("host is empty");
         }
         SingleServerConfig serverConfig = config.useSingleServer()
-                .setAddress(ADDRESS_PREFIX + this.host + ":" + port)
+                .setAddress(ADDRESS_PREFIX + this.host + ":" + this.port)
                 .setTimeout(this.timeout);
         if (StringUtils.hasText(this.password)) {
             serverConfig.setPassword(this.password);

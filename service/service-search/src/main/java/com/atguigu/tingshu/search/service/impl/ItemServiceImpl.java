@@ -66,7 +66,7 @@ public class ItemServiceImpl implements ItemService {
             data.setBaseCategoryView(baseCategoryView);
         }, executorService);
 
-        // 根据专辑id查询专辑统计信息s
+        // 根据专辑id查询专辑统计信息
         CompletableFuture<Void> albumStatVoCompletableFuture = CompletableFuture.runAsync(() -> {
             Result<AlbumStatVo> albumStatsRes = this.albumInfoFeignClient.getAlbumStatsByAlbumId(albumId);
             Assert.notNull(albumStatsRes, "根据专辑Id获取统计信息列表失败！");

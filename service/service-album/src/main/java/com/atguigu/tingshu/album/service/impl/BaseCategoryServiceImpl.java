@@ -3,6 +3,7 @@ package com.atguigu.tingshu.album.service.impl;
 import com.alibaba.fastjson.JSONObject;
 import com.atguigu.tingshu.album.mapper.*;
 import com.atguigu.tingshu.album.service.BaseCategoryService;
+import com.atguigu.tingshu.common.cache.TingShuCache;
 import com.atguigu.tingshu.model.album.*;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -84,6 +85,7 @@ public class BaseCategoryServiceImpl extends ServiceImpl<BaseCategory1Mapper, Ba
         return this.baseAttributeMapper.selectAttributeByCategory1Id(category1Id);
     }
 
+    @TingShuCache(prefix = "category:view:id3:info:", lockPrefix = "category:view:id3:lock:")
     @Override
     public BaseCategoryView findBaseCategoryViewByCategory3Id(Long category3Id) {
         return this.baseCategoryViewMapper.selectOne(Wrappers.lambdaQuery(BaseCategoryView.class)
