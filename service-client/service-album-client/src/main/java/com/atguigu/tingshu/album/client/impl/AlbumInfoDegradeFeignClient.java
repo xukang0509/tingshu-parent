@@ -32,4 +32,14 @@ public class AlbumInfoDegradeFeignClient implements AlbumInfoFeignClient {
     public Result<AlbumStatVo> getAlbumStatsByAlbumId(Long albumId) {
         return null;
     }
+
+    @Override
+    public Result<List<Long>> findLatelyUpdateAlbum(String startTime, String endTime) {
+        return null;
+    }
+
+    @Override
+    public Result<List<AlbumStatVo>> findAlbumStatVoList(List<Long> albumIds) {
+        return null;
+    }
 }

@@ -56,4 +56,9 @@ public interface SearchService {
      * @return
      */
     List<AlbumInfoIndexVo> findRankingList(Long category1Id, String orderField);
+
+    /**
+     * 更新最近的专辑统计信息到es
+     */
+    void updateLatelyAlbumStat();
 }

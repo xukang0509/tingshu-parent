@@ -43,4 +43,9 @@ public interface UserInfoService extends IService<UserInfo> {
      * @return 当前用户购买过该专辑下的声音列表
      */
     List<UserPaidTrack> getPaidTracksByAlbumIdAndUserId(Long albumId, Long userId);
+
+    /**
+     * 更新过期vip状态
+     */
+    void updateExpiredVipStatus();
 }

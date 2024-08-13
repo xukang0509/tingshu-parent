@@ -84,4 +84,21 @@ public interface AlbumInfoService extends IService<AlbumInfo> {
      * @return 统计信息列表
      */
     AlbumStatVo getAlbumStatsByAlbumId(Long albumId);
+
+    /**
+     * 查询统计信息最近更新过的专辑id列表
+     *
+     * @param startTime 开始时间
+     * @param endTime   结束时间
+     * @return 专辑id列表
+     */
+    List<Long> findLatelyUpdateAlbum(String startTime, String endTime);
+
+    /**
+     * 根据专辑id列表查询统计信息
+     *
+     * @param albumIds 专辑id列表
+     * @return 统计信息列表
+     */
+    List<AlbumStatVo> findAlbumStatVoList(List<Long> albumIds);
 }

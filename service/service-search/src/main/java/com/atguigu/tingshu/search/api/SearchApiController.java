@@ -64,5 +64,11 @@ public class SearchApiController {
         return Result.ok(this.searchService.findRankingList(category1Id, orderField));
     }
 
+    @Operation(summary = "更新最近的专辑统计信息到es")
+    @GetMapping("updateLatelyAlbumStat")
+    public Result updateLatelyAlbumStat() {
+        this.searchService.updateLatelyAlbumStat();
+        return Result.ok();
+    }
 }
 

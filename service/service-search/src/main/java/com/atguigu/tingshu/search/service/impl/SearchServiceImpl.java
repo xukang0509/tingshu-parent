@@ -13,6 +13,7 @@ import co.elastic.clients.elasticsearch.core.search.Suggestion;
 import com.alibaba.fastjson.JSONObject;
 import com.atguigu.tingshu.album.client.AlbumInfoFeignClient;
 import com.atguigu.tingshu.album.client.CategoryFeignClient;
+import com.atguigu.tingshu.common.constant.RedisConstant;
 import com.atguigu.tingshu.common.result.Result;
 import com.atguigu.tingshu.common.util.PinYinUtils;
 import com.atguigu.tingshu.model.album.AlbumAttributeValue;
@@ -29,18 +30,23 @@ import com.atguigu.tingshu.vo.album.AlbumStatVo;
 import com.atguigu.tingshu.vo.search.AlbumInfoIndexVo;
 import com.atguigu.tingshu.vo.search.AlbumSearchResponseVo;
 import com.atguigu.tingshu.vo.user.UserInfoVo;
+import com.google.common.collect.Lists;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.joda.time.LocalDateTime;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchTemplate;
 import org.springframework.data.elasticsearch.core.suggest.Completion;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
 
@@ -62,6 +68,12 @@ public class SearchServiceImpl implements SearchService {
 
     @Resource
     private CategoryFeignClient categoryFeignClient;
+
+    @Resource
+    private RedisTemplate redisTemplate;
+
+    @Resource
+    private ExecutorService executorService;
 
     @Override
     public void upperAlbum(Long albumId) {
@@ -406,6 +418,68 @@ public class SearchServiceImpl implements SearchService {
             }).toList();
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void updateLatelyAlbumStat() {
+        log.info("同步专辑统计信息开始：{}", System.currentTimeMillis());
+        try {
+            // 为了防止每次统计间隙有数据遗漏
+            // 记录统计开始时间到redis，上一次统计的截止时间是这一次的开始时间
+            String startTime = (String) this.redisTemplate.opsForValue().get(RedisConstant.ALBUM_STAT_ENDTIME);
+            if (StringUtils.isBlank(startTime)) {
+                // 如果没有则取一个小时前的时间
+                startTime = LocalDateTime.now().minusHours(1).toString("yyyy-MM-dd HH:mm:ss");
+            }
+            // 统计截止时间
+            String endTime = LocalDateTime.now().toString("yyyy-MM-dd HH:mm:ss");
+            // 记录到redis中作为下一次的起始时间
+            this.redisTemplate.opsForValue().set(RedisConstant.ALBUM_STAT_ENDTIME, endTime);
+
+            // 获取最近统计信息发生变化的专辑列表
+            Result<List<Long>> albumIdsRes = this.albumInfoFeignClient.findLatelyUpdateAlbum(startTime, endTime);
+            Assert.notNull(albumIdsRes, "同步数据时，获取专辑列表失败");
+            List<Long> albumIds = albumIdsRes.getData();
+            if (CollectionUtils.isEmpty(albumIds)) return;
+
+            // 如果专辑id列表不为空则需要同步到es
+            // 为了提高性能，每1000个专辑id拆分成一个部分，然后使用多线程并发执行
+            List<List<Long>> partitions = Lists.partition(albumIds, 1000);
+            int count = partitions.size();
+            // 初始化countDownLatch
+            CountDownLatch countDownLatch = new CountDownLatch(count);
+            partitions.forEach(partAlbumIds -> {
+                // 通过线程池控制线程数
+                executorService.execute(() -> {
+                    Result<List<AlbumStatVo>> albumStatVoListRes = this.albumInfoFeignClient.findAlbumStatVoList(partAlbumIds);
+                    Assert.notNull(albumStatVoListRes, "同步数据到es时，获取专辑统计信息失败！");
+                    List<AlbumStatVo> albumStatVoList = albumStatVoListRes.getData();
+                    // 如果为空，则直接返回
+                    if (CollectionUtils.isEmpty(albumStatVoList)) return;
+                    // 同步到es
+                    albumStatVoList.forEach(albumStatVo -> {
+                        AlbumInfoIndex albumInfoIndex = new AlbumInfoIndex();
+                        albumInfoIndex.setId(albumStatVo.getAlbumId());
+                        albumInfoIndex.setPlayStatNum(albumStatVo.getPlayStatNum());
+                        albumInfoIndex.setBuyStatNum(albumStatVo.getBuyStatNum());
+                        albumInfoIndex.setSubscribeStatNum(albumStatVo.getSubscribeStatNum());
+                        albumInfoIndex.setCommentStatNum(albumStatVo.getCommentStatNum());
+                        // 设置热度
+                        albumInfoIndex.setHotScore(albumStatVo.getPlayStatNum() * 0.2 +
+                                albumStatVo.getSubscribeStatNum() * 0.3 +
+                                albumStatVo.getBuyStatNum() * 0.4 +
+                                albumStatVo.getCommentStatNum() * 0.1);
+                        this.elasticsearchTemplate.update(albumInfoIndex);
+                    });
+                });
+                countDownLatch.countDown();
+            });
+            countDownLatch.await();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } finally {
+            log.info("同步专辑统计信息结束：{}", System.currentTimeMillis());
         }
     }
 }

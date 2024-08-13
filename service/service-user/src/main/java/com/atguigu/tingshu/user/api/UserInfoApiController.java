@@ -44,5 +44,13 @@ public class UserInfoApiController {
     public Result<List<UserPaidTrack>> getPaidTracksByAlbumIdAndUserId(@PathVariable("albumId") Long albumId) {
         return Result.ok(this.userInfoService.getPaidTracksByAlbumIdAndUserId(albumId, AuthContextHolder.getUserId()));
     }
+
+    // http://localhost:8500/api/user/userInfo/updateExpiredVipStatus
+    @Operation(summary = "更新过期vip状态")
+    @GetMapping("updateExpiredVipStatus")
+    public Result updateExpiredVipStatus() {
+        this.userInfoService.updateExpiredVipStatus();
+        return Result.ok();
+    }
 }
 

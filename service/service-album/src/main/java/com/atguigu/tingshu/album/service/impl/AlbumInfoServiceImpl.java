@@ -244,4 +244,17 @@ public class AlbumInfoServiceImpl extends ServiceImpl<AlbumInfoMapper, AlbumInfo
         albumStatVo.setCommentStatNum(typeToNumMap.get(SystemConstant.ALBUM_STAT_COMMENT));
         return albumStatVo;
     }
+
+    @Override
+    public List<Long> findLatelyUpdateAlbum(String startTime, String endTime) {
+        List<AlbumStat> albumStatList = this.albumStatMapper.selectList(Wrappers.lambdaQuery(AlbumStat.class)
+                .between(AlbumStat::getUpdateTime, startTime, endTime)
+                .select(AlbumStat::getAlbumId));
+        return albumStatList.stream().map(AlbumStat::getAlbumId).distinct().toList();
+    }
+
+    @Override
+    public List<AlbumStatVo> findAlbumStatVoList(List<Long> albumIds) {
+        return this.albumStatMapper.findAlbumStatVoList(albumIds);
+    }
 }

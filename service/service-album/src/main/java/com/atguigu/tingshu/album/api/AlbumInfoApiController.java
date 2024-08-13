@@ -107,5 +107,21 @@ public class AlbumInfoApiController {
     public Result<AlbumStatVo> getAlbumStatsByAlbumId(@PathVariable("albumId") Long albumId) {
         return Result.ok(this.albumInfoService.getAlbumStatsByAlbumId(albumId));
     }
+
+    // http://localhost:8500/api/album/albumInfo/findLatelyUpdateAlbum/2024-07-10/2024-08-14
+    @Operation(summary = "查询统计信息最近更新过的专辑id列表")
+    @GetMapping("findLatelyUpdateAlbum/{startTime}/{endTime}")
+    public Result<List<Long>> findLatelyUpdateAlbum(@PathVariable("startTime") String startTime, @PathVariable("endTime") String endTime) {
+        List<Long> albumIds = this.albumInfoService.findLatelyUpdateAlbum(startTime, endTime);
+        return Result.ok(albumIds);
+    }
+
+    // http://localhost:8500/api/album/albumInfo/findAlbumStatVoList
+    @Operation(summary = "根据专辑id列表查询统计信息")
+    @PostMapping("findAlbumStatVoList")
+    public Result<List<AlbumStatVo>> findAlbumStatVoList(@RequestBody List<Long> albumIds) {
+        List<AlbumStatVo> albumStatVos = this.albumInfoService.findAlbumStatVoList(albumIds);
+        return Result.ok(albumStatVos);
+    }
 }
 

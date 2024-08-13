@@ -10,6 +10,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
@@ -34,4 +35,10 @@ public interface AlbumInfoFeignClient {
 
     @GetMapping("api/album/albumInfo/getAlbumState/{albumId}")
     Result<AlbumStatVo> getAlbumStatsByAlbumId(@PathVariable("albumId") Long albumId);
+
+    @GetMapping("api/album/albumInfo/findLatelyUpdateAlbum/{startTime}/{endTime}")
+    Result<List<Long>> findLatelyUpdateAlbum(@PathVariable("startTime") String startTime, @PathVariable("endTime") String endTime);
+
+    @PostMapping("api/album/albumInfo/findAlbumStatVoList")
+    Result<List<AlbumStatVo>> findAlbumStatVoList(@RequestBody List<Long> albumIds);
 }

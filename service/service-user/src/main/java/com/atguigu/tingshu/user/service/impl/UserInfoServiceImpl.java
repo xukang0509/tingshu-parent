@@ -16,9 +16,12 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import io.seata.spring.annotation.GlobalTransactional;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.joda.time.LocalDate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -68,5 +71,17 @@ public class UserInfoServiceImpl extends ServiceImpl<UserInfoMapper, UserInfo> i
         return this.userPaidTrackMapper.selectList(Wrappers.lambdaQuery(UserPaidTrack.class)
                 .eq(UserPaidTrack::getAlbumId, albumId)
                 .eq(UserPaidTrack::getUserId, userId));
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void updateExpiredVipStatus() {
+        // 获取今日凌晨时间：如果用户到今日凌晨时，vip已过期则更新为非vip
+        Date now = LocalDate.now().toDate();
+        UserInfo userInfo = new UserInfo();
+        userInfo.setIsVip(0);
+        this.userInfoMapper.update(userInfo, Wrappers.lambdaQuery(UserInfo.class)
+                .eq(UserInfo::getIsVip, 1)
+                .lt(UserInfo::getVipExpireTime, now));
     }
 }

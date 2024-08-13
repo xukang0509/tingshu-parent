@@ -28,4 +28,7 @@ public interface UserInfoFeignClient {
 
     @GetMapping("api/user/userInfo/getPaidTracks/{albumId}")
     Result<List<UserPaidTrack>> getPaidTracksByAlbumIdAndUserId(@PathVariable("albumId") Long albumId);
+
+    @GetMapping("api/user/userInfo/updateExpiredVipStatus")
+    Result updateExpiredVipStatus();
 }
