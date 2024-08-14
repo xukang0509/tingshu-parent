@@ -458,9 +458,10 @@ public class SearchServiceImpl implements SearchService {
                     // 如果为空，则直接返回
                     if (CollectionUtils.isEmpty(albumStatVoList)) return;
                     // 同步到es
+                    List<AlbumInfoIndex> albumInfoIndexList = new ArrayList<>();
                     albumStatVoList.forEach(albumStatVo -> {
-                        AlbumInfoIndex albumInfoIndex = new AlbumInfoIndex();
-                        albumInfoIndex.setId(albumStatVo.getAlbumId());
+                        AlbumInfoIndex albumInfoIndex = this.elasticsearchTemplate.get(albumStatVo.getAlbumId().toString(), AlbumInfoIndex.class);
+                        if (albumInfoIndex == null) return;
                         albumInfoIndex.setPlayStatNum(albumStatVo.getPlayStatNum());
                         albumInfoIndex.setBuyStatNum(albumStatVo.getBuyStatNum());
                         albumInfoIndex.setSubscribeStatNum(albumStatVo.getSubscribeStatNum());
@@ -470,10 +471,11 @@ public class SearchServiceImpl implements SearchService {
                                 albumStatVo.getSubscribeStatNum() * 0.3 +
                                 albumStatVo.getBuyStatNum() * 0.4 +
                                 albumStatVo.getCommentStatNum() * 0.1);
-                        this.elasticsearchTemplate.update(albumInfoIndex);
+                        albumInfoIndexList.add(albumInfoIndex);
                     });
+                    this.elasticsearchTemplate.save(albumInfoIndexList);
+                    countDownLatch.countDown();
                 });
-                countDownLatch.countDown();
             });
             countDownLatch.await();
         } catch (InterruptedException e) {

@@ -37,10 +37,7 @@ import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -210,8 +207,7 @@ public class TrackInfoServiceImpl extends ServiceImpl<TrackInfoMapper, TrackInfo
         // 3.判断付费类型
         String payType = albumInfo.getPayType();
         // 3.1 如果是免费 或者 当前专辑所属的用户是当前登录用户，直接返回声音分页列表（不显示付费标签）
-        if (SystemConstant.ALBUM_PAY_TYPE_FREE.equals(payType)
-                || Objects.equals(albumInfo.getUserId(), AuthContextHolder.getUserId())) {
+        if (SystemConstant.ALBUM_PAY_TYPE_FREE.equals(payType)) {
             return albumTrackListVoPage;
         }
 
@@ -358,5 +354,118 @@ public class TrackInfoServiceImpl extends ServiceImpl<TrackInfoMapper, TrackInfo
         );
         map.put("nextTrackId", nextTrackInfo != null ? nextTrackInfo.getId() : 0L);
         return map;
+    }
+
+    @Override
+    public List<TrackOrderVo> findUserTrackPaidList(Long trackId) {
+        TrackInfo trackInfo = this.trackInfoMapper.selectById(trackId);
+        if (trackInfo == null) throw new GuiguException(ResultCodeEnum.ARGUMENT_VALID_ERROR);
+        // 查询专辑信息
+        AlbumInfo albumInfo = this.albumInfoMapper.selectById(trackInfo.getAlbumId());
+        if (albumInfo == null) throw new GuiguException(ResultCodeEnum.DATA_ERROR);
+        // 获取当前声音所在专辑下 本集及以后的声音列表
+        List<Long> needBuyTrackIds = this.trackInfoMapper.selectList(Wrappers.lambdaQuery(TrackInfo.class)
+                        .eq(TrackInfo::getAlbumId, trackInfo.getAlbumId())
+                        .ge(TrackInfo::getOrderNum, trackInfo.getOrderNum())
+                        .orderByAsc(TrackInfo::getOrderNum)
+                        .select(TrackInfo::getId))
+                .stream().map(TrackInfo::getId).toList();
+        // 如果当前有用户登录，处理当前用户已经购买过的声音
+        if (AuthContextHolder.getUserId() != null) {
+            // 查询本专辑下已经购买过的声音列表
+            Result<List<UserPaidTrack>> userPaidTracksRes = this.userInfoFeignClient.getPaidTracksByAlbumIdAndUserId(trackInfo.getAlbumId());
+            if (userPaidTracksRes != null && !CollectionUtils.isEmpty(userPaidTracksRes.getData())) {
+                // 如果有已购买的记录，过滤出需要购买的
+                Set<Long> paidIds = userPaidTracksRes.getData().stream().map(UserPaidTrack::getTrackId).collect(Collectors.toSet());
+                needBuyTrackIds = needBuyTrackIds.stream().filter(id -> !paidIds.contains(id)).toList();
+            }
+        }
+        // 判断当前可购买的声音是否为空
+        if (CollectionUtils.isEmpty(needBuyTrackIds)) {
+            return null;
+        }
+        // 组装声音购买模式列表
+        List<TrackOrderVo> trackOrderVoList = new ArrayList<>();
+        // 单集价格
+        BigDecimal singlePrice = albumInfo.getPrice();
+        // 购买本集
+        if (needBuyTrackIds.contains(trackId)) {
+            trackOrderVoList.add(TrackOrderVo.builder()
+                    .name("本集").price(singlePrice).trackCount(1).build());
+        }
+        // 集数小于等于10集的
+        int count = needBuyTrackIds.size();
+        if (count > 1 && count <= 10) {
+            trackOrderVoList.add(TrackOrderVo.builder()
+                    .name("后" + count + "集").trackCount(count)
+                    .price(singlePrice.multiply(BigDecimal.valueOf(count))).build());
+        }
+        // 大于10集：后10集
+        if (count > 10) {
+            trackOrderVoList.add(TrackOrderVo.builder()
+                    .name("后10集").trackCount(10)
+                    .price(singlePrice.multiply(BigDecimal.valueOf(10))).build());
+        }
+        // 大于10集小于等于20集
+        if (count > 10 && count <= 20) {
+            trackOrderVoList.add(TrackOrderVo.builder()
+                    .name("后" + count + "集").trackCount(count)
+                    .price(singlePrice.multiply(BigDecimal.valueOf(count))).build());
+        }
+        // 大于20集：后20集
+        if (count > 20) {
+            trackOrderVoList.add(TrackOrderVo.builder()
+                    .name("后20集").trackCount(20)
+                    .price(singlePrice.multiply(BigDecimal.valueOf(20))).build());
+        }
+        // 大于20集小于等于30集
+        if (count > 20 && count <= 30) {
+            trackOrderVoList.add(TrackOrderVo.builder()
+                    .name("后" + count + "集").trackCount(count)
+                    .price(singlePrice.multiply(BigDecimal.valueOf(count))).build());
+        }
+        // 大于30集：后30集
+        if (count > 30) {
+            trackOrderVoList.add(TrackOrderVo.builder()
+                    .name("后30集").trackCount(30)
+                    .price(singlePrice.multiply(BigDecimal.valueOf(30))).build());
+        }
+        // 大于30集小于等于50集
+        if (count > 30 && count <= 50) {
+            trackOrderVoList.add(TrackOrderVo.builder()
+                    .name("后" + count + "集").trackCount(count)
+                    .price(singlePrice.multiply(BigDecimal.valueOf(count))).build());
+        }
+        // 大于50集：后50集
+        if (count > 50) {
+            trackOrderVoList.add(TrackOrderVo.builder()
+                    .name("后50集").trackCount(50)
+                    .price(singlePrice.multiply(BigDecimal.valueOf(50))).build());
+            trackOrderVoList.add(TrackOrderVo.builder()
+                    .name("后" + count + "集").trackCount(count)
+                    .price(singlePrice.multiply(BigDecimal.valueOf(count))).build());
+        }
+        return trackOrderVoList;
+    }
+
+    @Override
+    public List<TrackInfo> findTrackInfosByIdAndCount(Long trackId, Integer count) {
+        // 获取当前声音
+        TrackInfo trackInfo = this.trackInfoMapper.selectById(trackId);
+        Assert.notNull(trackInfo, "该声音不存在！");
+        // 获取专辑下当前声音及其之后的所有声音
+        List<TrackInfo> needBuyTrackInfos = this.trackInfoMapper.selectList(Wrappers.lambdaQuery(TrackInfo.class)
+                .eq(TrackInfo::getAlbumId, trackInfo.getAlbumId())
+                .ge(TrackInfo::getOrderNum, trackInfo.getOrderNum())
+                .orderByAsc(TrackInfo::getOrderNum)
+                .select(TrackInfo::getId, TrackInfo::getTrackTitle, TrackInfo::getCoverUrl, TrackInfo::getAlbumId)
+        );
+        // 处理掉当前用户已经购买过的声音
+        Result<List<UserPaidTrack>> userPaidTracksRes = this.userInfoFeignClient.getPaidTracksByAlbumIdAndUserId(trackInfo.getAlbumId());
+        if (userPaidTracksRes != null && !CollectionUtils.isEmpty(userPaidTracksRes.getData())) {
+            Set<Long> paidIds = userPaidTracksRes.getData().stream().map(UserPaidTrack::getTrackId).collect(Collectors.toSet());
+            needBuyTrackInfos.removeIf(needBuyTrackInfo -> paidIds.contains(needBuyTrackInfo.getId()));
+        }
+        return needBuyTrackInfos.stream().limit(count).toList();
     }
 }

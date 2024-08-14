@@ -18,6 +18,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @Tag(name = "声音管理")
 @RestController
 @RequestMapping("api/album/trackInfo")
@@ -110,6 +112,21 @@ public class TrackInfoApiController {
     @GetMapping("getPlayToken/{trackId}")
     public Result<JSONObject> getPlayToken(@PathVariable Long trackId) {
         return Result.ok(this.trackInfoService.getPlayToken(trackId));
+    }
+
+    // http://127.0.0.1:8500/api/album/trackInfo/findUserTrackPaidList/48244
+    @AuthLogin(required = false)
+    @Operation(summary = "查询声音购买模式列表")
+    @GetMapping("findUserTrackPaidList/{trackId}")
+    public Result<List<TrackOrderVo>> findUserTrackPaidList(@PathVariable("trackId") Long trackId) {
+        return Result.ok(this.trackInfoService.findUserTrackPaidList(trackId));
+    }
+
+    @AuthLogin
+    @Operation(summary = "根据声音id及购买数量查询购买的声音列表")
+    @GetMapping("findTrackInfosByIdAndCount/{trackId}/{count}")
+    public Result<List<TrackInfo>> findTrackInfosByIdAndCount(@PathVariable("trackId") Long trackId, @PathVariable("count") Integer count) {
+        return Result.ok(this.trackInfoService.findTrackInfosByIdAndCount(trackId, count));
     }
 }
 

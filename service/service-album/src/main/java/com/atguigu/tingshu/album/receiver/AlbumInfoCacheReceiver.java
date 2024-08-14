@@ -2,7 +2,9 @@ package com.atguigu.tingshu.album.receiver;
 
 import com.alibaba.fastjson.JSONObject;
 import com.atguigu.tingshu.album.pojo.MaxWellObj;
+import com.atguigu.tingshu.common.constant.RabbitMqConstant;
 import com.atguigu.tingshu.common.constant.RedisConstant;
+import com.atguigu.tingshu.common.service.RabbitService;
 import com.atguigu.tingshu.model.album.AlbumInfo;
 import com.rabbitmq.client.Channel;
 import jakarta.annotation.Resource;
@@ -25,6 +27,9 @@ public class AlbumInfoCacheReceiver {
     @Resource
     private RedisTemplate redisTemplate;
 
+    @Resource
+    private RabbitService rabbitService;
+
     @SneakyThrows
     @RabbitListener(queues = {"tingshu.album.cache"})
     public void albumInfoCacheManager(String json, Message message, Channel channel) {
@@ -44,6 +49,18 @@ public class AlbumInfoCacheReceiver {
     private void processAlbumCache(MaxWellObj maxWellObj) {
         AlbumInfo data = JSONObject.parseObject(maxWellObj.getData(), AlbumInfo.class);
         String key = RedisConstant.ALBUM_INFO_PREFIX + data.getId();
+        if ("delete".equals(maxWellObj.getType())) {
+            rabbitService.sendMessage(RabbitMqConstant.EXCHANGE_ALBUM_LOWER,
+                    RabbitMqConstant.ROUTING_ALBUM_LOWER, data.getId());
+        } else {
+            if ("1".equals(data.getIsOpen())) {
+                rabbitService.sendMessage(RabbitMqConstant.EXCHANGE_ALBUM_UPPER,
+                        RabbitMqConstant.ROUTING_ALBUM_UPPER, data.getId());
+            } else {
+                rabbitService.sendMessage(RabbitMqConstant.EXCHANGE_ALBUM_LOWER,
+                        RabbitMqConstant.ROUTING_ALBUM_LOWER, data.getId());
+            }
+        }
         if (!"update".equals(maxWellObj.getType())) return;
         if (data.getIsDeleted() == 1) {
             // 逻辑删除

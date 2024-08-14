@@ -1,14 +1,14 @@
 package com.atguigu.tingshu.account.api;
 
 import com.atguigu.tingshu.account.service.UserAccountService;
+import com.atguigu.tingshu.common.login.AuthLogin;
 import com.atguigu.tingshu.common.result.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
 
 @Tag(name = "用户账户管理")
 @RestController
@@ -24,6 +24,14 @@ public class UserAccountApiController {
     public Result saveUserAccount(@PathVariable("userId") Long userId) {
         this.userAccountService.saveUserAccount(userId);
         return Result.ok();
+    }
+
+    // http://127.0.0.1:8500/api/account/userAccount/getAvailableAmount
+    @AuthLogin
+    @Operation(summary = "获取用户账户余额")
+    @GetMapping("getAvailableAmount")
+    public Result<BigDecimal> getAvailableAmount() {
+        return Result.ok(this.userAccountService.getAvailableAmount());
     }
 
 }

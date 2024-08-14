@@ -41,4 +41,6 @@ public class RedisConstant {
     public static final String ALBUM_STAT_ENDTIME = "album:stat:endTime";
 
 
+    public static final String USER_TRADE_PREFIX = "user:trade:";
+    public static final Long USER_TRADE_TIMEOUT = 60 * 60L;
 }

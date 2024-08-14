@@ -1,10 +1,8 @@
 package com.atguigu.tingshu.dispatch.job;
 
 import com.atguigu.tingshu.common.result.Result;
-import com.atguigu.tingshu.dispatch.mapper.XxlJobLogMapper;
-import com.atguigu.tingshu.model.dispatch.XxlJobLog;
+import com.atguigu.tingshu.dispatch.job.common.TingShuHandler;
 import com.atguigu.tingshu.user.client.UserInfoFeignClient;
-import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -20,12 +18,11 @@ public class UserJobHandler {
     @Resource
     private UserInfoFeignClient userInfoFeignClient;
 
-    @Resource
-    private XxlJobLogMapper xxlJobLogMapper;
-
+    @TingShuHandler(describe = "更新过期vip用户状态")
     @XxlJob("updateExpiredVipStatusJob")
-    public void updateExpiredVipStatusJob() {
-        log.info("更新过期vip用户的状态：{}", XxlJobHelper.getJobId());
+    public Result updateExpiredVipStatusJob() {
+        return this.userInfoFeignClient.updateExpiredVipStatus();
+        /*log.info("更新过期vip用户的状态：{}", XxlJobHelper.getJobId());
         long startTimes = System.currentTimeMillis();
 
         XxlJobLog xxlJobLog = new XxlJobLog();
@@ -54,6 +51,6 @@ public class UserJobHandler {
             // 处理执行时长
             xxlJobLog.setTimes((int) (System.currentTimeMillis() - startTimes));
             this.xxlJobLogMapper.insert(xxlJobLog);
-        }
+        }*/
     }
 }

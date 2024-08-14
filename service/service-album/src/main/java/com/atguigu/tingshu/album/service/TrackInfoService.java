@@ -3,13 +3,12 @@ package com.atguigu.tingshu.album.service;
 import com.alibaba.fastjson.JSONObject;
 import com.atguigu.tingshu.model.album.TrackInfo;
 import com.atguigu.tingshu.query.album.TrackInfoQuery;
-import com.atguigu.tingshu.vo.album.AlbumTrackListVo;
-import com.atguigu.tingshu.vo.album.TrackInfoVo;
-import com.atguigu.tingshu.vo.album.TrackListVo;
-import com.atguigu.tingshu.vo.album.TrackStatVo;
+import com.atguigu.tingshu.vo.album.*;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+
+import java.util.List;
 
 public interface TrackInfoService extends IService<TrackInfo> {
 
@@ -69,4 +68,21 @@ public interface TrackInfoService extends IService<TrackInfo> {
      * @return 播放凭证
      */
     JSONObject getPlayToken(Long trackId);
+
+    /**
+     * 查询声音购买模式列表
+     *
+     * @param trackId 声音id
+     * @return 声音购买模式列表
+     */
+    List<TrackOrderVo> findUserTrackPaidList(Long trackId);
+
+    /**
+     * 根据声音id及购买数量查询购买的声音列表
+     *
+     * @param trackId 声音id
+     * @param count   购买声音的数量
+     * @return 购买的声音列表
+     */
+    List<TrackInfo> findTrackInfosByIdAndCount(Long trackId, Integer count);
 }
