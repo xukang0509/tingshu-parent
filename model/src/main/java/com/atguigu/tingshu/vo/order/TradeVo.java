@@ -2,6 +2,7 @@ package com.atguigu.tingshu.vo.order;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
 
@@ -13,6 +14,7 @@ public class TradeVo {
     @Schema(description = "付款项目类型: 1001-专辑 1002-声音 1003-vip会员", required = true)
     private String itemType;
 
+    @NotNull
     @Positive(message = "付款项目类型Id不能为空")
     @Schema(description = "付款项目类型Id", required = true)
     private Long itemId;

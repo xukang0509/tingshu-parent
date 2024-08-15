@@ -13,4 +13,11 @@ public interface OrderInfoService extends IService<OrderInfo> {
      * @return 订单对象
      */
     OrderInfoVo trade(TradeVo tradeVo);
+
+    /**
+     * 提交订单
+     *
+     * @param orderInfoVo 订单对象
+     */
+    void submitOrder(OrderInfoVo orderInfoVo);
 }

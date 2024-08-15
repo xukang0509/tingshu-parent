@@ -8,10 +8,14 @@ import com.atguigu.tingshu.vo.order.TradeVo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Tag(name = "订单管理")
 @RestController
@@ -26,7 +30,7 @@ public class OrderInfoApiController {
     @AuthLogin
     @Operation(summary = "订单交易")
     @PostMapping("trade")
-    public Result<OrderInfoVo> trade(@RequestBody TradeVo tradeVo) {
+    public Result<OrderInfoVo> trade(@RequestBody @Validated TradeVo tradeVo) {
         return Result.ok(this.orderInfoService.trade(tradeVo));
     }
 
@@ -34,9 +38,12 @@ public class OrderInfoApiController {
     @AuthLogin
     @Operation(summary = "提交订单")
     @PostMapping("submitOrder")
-    public Result<?> submitOrder(@RequestBody OrderInfoVo orderInfoVo) {
-        
-        return Result.ok();
+    public Result<Map<String, Object>> submitOrder(@RequestBody @Validated OrderInfoVo orderInfoVo) {
+        this.orderInfoService.submitOrder(orderInfoVo);
+        String tradeNo = orderInfoVo.getTradeNo();
+        Map<String, Object> map = new HashMap<>();
+        map.put("orderNo", tradeNo);
+        return Result.ok(map);
     }
 }
 

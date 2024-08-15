@@ -363,23 +363,30 @@ public class TrackInfoServiceImpl extends ServiceImpl<TrackInfoMapper, TrackInfo
         // 查询专辑信息
         AlbumInfo albumInfo = this.albumInfoMapper.selectById(trackInfo.getAlbumId());
         if (albumInfo == null) throw new GuiguException(ResultCodeEnum.DATA_ERROR);
-        // 获取当前声音所在专辑下 本集及以后的声音列表
-        List<Long> needBuyTrackIds = this.trackInfoMapper.selectList(Wrappers.lambdaQuery(TrackInfo.class)
-                        .eq(TrackInfo::getAlbumId, trackInfo.getAlbumId())
-                        .ge(TrackInfo::getOrderNum, trackInfo.getOrderNum())
-                        .orderByAsc(TrackInfo::getOrderNum)
-                        .select(TrackInfo::getId))
-                .stream().map(TrackInfo::getId).toList();
+
         // 如果当前有用户登录，处理当前用户已经购买过的声音
+        Set<Long> paidIds = null;
         if (AuthContextHolder.getUserId() != null) {
-            // 查询本专辑下已经购买过的声音列表
             Result<List<UserPaidTrack>> userPaidTracksRes = this.userInfoFeignClient.getPaidTracksByAlbumIdAndUserId(trackInfo.getAlbumId());
             if (userPaidTracksRes != null && !CollectionUtils.isEmpty(userPaidTracksRes.getData())) {
-                // 如果有已购买的记录，过滤出需要购买的
-                Set<Long> paidIds = userPaidTracksRes.getData().stream().map(UserPaidTrack::getTrackId).collect(Collectors.toSet());
-                needBuyTrackIds = needBuyTrackIds.stream().filter(id -> !paidIds.contains(id)).toList();
+                paidIds = userPaidTracksRes.getData().stream().map(UserPaidTrack::getTrackId).collect(Collectors.toSet());
             }
         }
+        Set<Long> tmpPaidIds = paidIds == null ? new HashSet<>() : paidIds;
+        if (tmpPaidIds.contains(trackId)) {
+            throw new GuiguException(ResultCodeEnum.REPEAT_BUY_ERROR);
+        }
+
+        // 获取当前声音所在专辑下 本集及以后的声音列表
+        Set<Long> needBuyTrackIds = this.trackInfoMapper.selectList(Wrappers.lambdaQuery(TrackInfo.class)
+                        .eq(TrackInfo::getAlbumId, trackInfo.getAlbumId())
+                        .ge(TrackInfo::getOrderNum, trackInfo.getOrderNum())
+                        .select(TrackInfo::getId))
+                .stream().map(TrackInfo::getId).collect(Collectors.toSet());
+
+        // 如果有已购买的记录，过滤出需要购买的
+        needBuyTrackIds = needBuyTrackIds.stream().filter(id -> !tmpPaidIds.contains(id)).collect(Collectors.toSet());
+
         // 判断当前可购买的声音是否为空
         if (CollectionUtils.isEmpty(needBuyTrackIds)) {
             return null;
@@ -453,6 +460,19 @@ public class TrackInfoServiceImpl extends ServiceImpl<TrackInfoMapper, TrackInfo
         // 获取当前声音
         TrackInfo trackInfo = this.trackInfoMapper.selectById(trackId);
         Assert.notNull(trackInfo, "该声音不存在！");
+
+        // 获取当前用户已经购买过的声音
+        Set<Long> paidIds = null;
+        Result<List<UserPaidTrack>> userPaidTracksRes = this.userInfoFeignClient.getPaidTracksByAlbumIdAndUserId(trackInfo.getAlbumId());
+        Assert.notNull(userPaidTracksRes, "远程调用：获取当前用户购买声音信息失败！");
+        if (!CollectionUtils.isEmpty(userPaidTracksRes.getData())) {
+            paidIds = userPaidTracksRes.getData().stream().map(UserPaidTrack::getTrackId).collect(Collectors.toSet());
+        }
+        Set<Long> tmpPaidIds = paidIds == null ? new HashSet<>() : paidIds;
+        if (tmpPaidIds.contains(trackId)) {
+            throw new GuiguException(ResultCodeEnum.REPEAT_BUY_ERROR);
+        }
+
         // 获取专辑下当前声音及其之后的所有声音
         List<TrackInfo> needBuyTrackInfos = this.trackInfoMapper.selectList(Wrappers.lambdaQuery(TrackInfo.class)
                 .eq(TrackInfo::getAlbumId, trackInfo.getAlbumId())
@@ -460,12 +480,7 @@ public class TrackInfoServiceImpl extends ServiceImpl<TrackInfoMapper, TrackInfo
                 .orderByAsc(TrackInfo::getOrderNum)
                 .select(TrackInfo::getId, TrackInfo::getTrackTitle, TrackInfo::getCoverUrl, TrackInfo::getAlbumId)
         );
-        // 处理掉当前用户已经购买过的声音
-        Result<List<UserPaidTrack>> userPaidTracksRes = this.userInfoFeignClient.getPaidTracksByAlbumIdAndUserId(trackInfo.getAlbumId());
-        if (userPaidTracksRes != null && !CollectionUtils.isEmpty(userPaidTracksRes.getData())) {
-            Set<Long> paidIds = userPaidTracksRes.getData().stream().map(UserPaidTrack::getTrackId).collect(Collectors.toSet());
-            needBuyTrackInfos.removeIf(needBuyTrackInfo -> paidIds.contains(needBuyTrackInfo.getId()));
-        }
+        needBuyTrackInfos.removeIf(needBuyTrackInfo -> tmpPaidIds.contains(needBuyTrackInfo.getId()));
         return needBuyTrackInfos.stream().limit(count).toList();
     }
 }
