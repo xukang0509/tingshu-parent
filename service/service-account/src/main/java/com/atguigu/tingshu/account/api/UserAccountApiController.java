@@ -3,6 +3,8 @@ package com.atguigu.tingshu.account.api;
 import com.atguigu.tingshu.account.service.UserAccountService;
 import com.atguigu.tingshu.common.login.AuthLogin;
 import com.atguigu.tingshu.common.result.Result;
+import com.atguigu.tingshu.vo.account.AccountLockResultVo;
+import com.atguigu.tingshu.vo.account.AccountLockVo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
@@ -27,11 +29,19 @@ public class UserAccountApiController {
     }
 
     // http://127.0.0.1:8500/api/account/userAccount/getAvailableAmount
-    @AuthLogin
+    @AuthLogin(required = false)
     @Operation(summary = "获取用户账户余额")
     @GetMapping("getAvailableAmount")
     public Result<BigDecimal> getAvailableAmount() {
         return Result.ok(this.userAccountService.getAvailableAmount());
+    }
+
+    // http://127.0.0.1:8500/api/account/userAccount/checkAndLock
+    @AuthLogin
+    @Operation(summary = "验余额并锁账户")
+    @PostMapping("checkAndLock")
+    public Result<AccountLockResultVo> checkAndLock(@RequestBody AccountLockVo accountLockVo) {
+        return this.userAccountService.checkAndLock(accountLockVo);
     }
 
 }

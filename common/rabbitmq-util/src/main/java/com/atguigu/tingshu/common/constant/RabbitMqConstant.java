@@ -23,6 +23,34 @@ public class RabbitMqConstant {
     public static final String QUEUE_STAT_UPDATE = "tingshu.stat.update";
     public static final String ROUTING_STAT_UPDATE = "tingshu.stat.update";
 
+    /**
+     * 账户余额支付成功：发送消息减余额
+     */
+    public static final String EXCHANGE_ACCOUNT_MINUS = "tingshu.account:minus";
+    public static final String QUEUE_ACCOUNT_MINUS = "tingshu.account.minus";
+    public static final String ROUTING_ACCOUNT_MINUS = "tingshu.account.minus";
+
+    /**
+     * 账户余额支付失败：发送消息解锁余额
+     */
+    public static final String EXCHANGE_ACCOUNT_UNLOCK = "tingshu.account:unlock";
+    public static final String QUEUE_ACCOUNT_UNLOCK = "tingshu.account.unlock";
+    public static final String ROUTING_ACCOUNT_UNLOCK = "tingshu.account.unlock";
+
+    /**
+     * 支付成功
+     */
+    public static final String EXCHANGE_ORDER_PAY_SUCCESS = "tingshu.order.pay";
+    public static final String QUEUE_ORDER_PAY_SUCCESS = "tingshu.order.pay.success";
+    public static final String ROUTING_ORDER_PAY_SUCCESS = "tingshu.order.pay.success";
+
+    /**
+     * 订单支付成功后，更新用户购买记录
+     */
+    public static final String EXCHANGE_USER_PAY_RECORD = "tingshu.user.pay.record";
+    public static final String QUEUE_USER_PAY_RECORD = "tingshu.user.pay.record";
+    public static final String ROUTING_USER_PAY_RECORD = "tingshu.user.pay.record";
+
 
     /*==============================================================================*/
 
@@ -41,20 +69,12 @@ public class RabbitMqConstant {
     /**
      * 支付
      */
-    public static final String QUEUE_ORDER_PAY_SUCCESS = "tingshu.order.pay.success";
     public static final String QUEUE_RECHARGE_PAY_SUCCESS = "tingshu.recharge.pay.success";
-
-
-    /**
-     * 账户
-     */
-    public static final String QUEUE_ACCOUNT_UNLOCK = "tingshu.account.unlock";
-    public static final String QUEUE_ACCOUNT_MINUS = "tingshu.account.minus";
 
     /**
      * 用户
      */
-    public static final String QUEUE_USER_PAY_RECORD = "tingshu.user.pay.record";
+
     public static final String QUEUE_USER_REGISTER = "tingshu.user.register";
     public static final String QUEUE_USER_VIP_EXPIRE_STATUS = "tingshu.user.vip.expire.status";
 

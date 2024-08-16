@@ -14,14 +14,16 @@ import java.util.TreeMap;
 public class SignHelper {
 
     private static String signKey = "atguigu123";
+
     /**
      * 验签方法
+     *
      * @param parameterMap
      */
-    public static void checkSign(Map<String, Object> parameterMap){
+    public static void checkSign(Map<String, Object> parameterMap) {
         //校验签名时间
-        Long remoteTimestamp = (Long)parameterMap.get("timestamp");
-        if(StringUtils.isEmpty(remoteTimestamp)){
+        Long remoteTimestamp = (Long) parameterMap.get("timestamp");
+        if (StringUtils.isEmpty(remoteTimestamp)) {
             throw new GuiguException(ResultCodeEnum.SIGN_ERROR);
         }
         long currentTimestamp = getTimestamp();
@@ -31,26 +33,27 @@ public class SignHelper {
         }
 
         //校验签名
-        String signRemote = (String)parameterMap.get("sign");
+        String signRemote = (String) parameterMap.get("sign");
 
         String signLocal = getSign(parameterMap);
-        if(StringUtils.isEmpty(signRemote)){
+        if (StringUtils.isEmpty(signRemote)) {
             throw new GuiguException(ResultCodeEnum.SIGN_ERROR);
         }
 
-        if(!signRemote.equals(signLocal)){
+        if (!signRemote.equals(signLocal)) {
             throw new GuiguException(ResultCodeEnum.SIGN_ERROR);
         }
     }
 
     /**
      * 请求数据获取签名
+     *
      * @param parameterMap
      * @return
      */
     public static String getSign(Map<String, Object> parameterMap) {
         //去掉sign参数
-        if(parameterMap.containsKey("sign")) {
+        if (parameterMap.containsKey("sign")) {
             parameterMap.remove("sign");
         }
 
@@ -71,6 +74,7 @@ public class SignHelper {
 
     /**
      * 获取时间戳
+     *
      * @return
      */
     public static long getTimestamp() {

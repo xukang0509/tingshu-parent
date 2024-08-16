@@ -3,6 +3,7 @@ package com.atguigu.tingshu.user.service;
 import com.atguigu.tingshu.model.user.UserInfo;
 import com.atguigu.tingshu.model.user.UserPaidTrack;
 import com.atguigu.tingshu.vo.user.UserInfoVo;
+import com.atguigu.tingshu.vo.user.UserPaidRecordVo;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 import java.util.List;
@@ -48,4 +49,11 @@ public interface UserInfoService extends IService<UserInfo> {
      * 更新过期vip状态
      */
     void updateExpiredVipStatus();
+
+    /**
+     * 更新用户购买记录
+     *
+     * @param userPaidRecordVo 购买记录
+     */
+    void updateUserPayRecord(UserPaidRecordVo userPaidRecordVo);
 }

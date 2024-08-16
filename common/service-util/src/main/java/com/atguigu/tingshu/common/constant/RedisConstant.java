@@ -43,4 +43,9 @@ public class RedisConstant {
 
     public static final String USER_TRADE_PREFIX = "user:trade:";
     public static final Long USER_TRADE_TIMEOUT = 60 * 60L;
+
+    public static final String ACCOUNT_CHECK_INFO_PREFIX = "account:check:info:";
+    public static final String ACCOUNT_CHECK_LOCK_PREFIX = "account:check:lock:";
+    public static final String ACCOUNT_CHECK_MINUS_PREFIX = "account:check:minus:";
+    public static final String ACCOUNT_CHECK_UNLOCK_PREFIX = "account:check:unlock:";
 }

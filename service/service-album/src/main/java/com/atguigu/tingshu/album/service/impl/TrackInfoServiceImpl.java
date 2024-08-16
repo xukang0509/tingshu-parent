@@ -263,7 +263,7 @@ public class TrackInfoServiceImpl extends ServiceImpl<TrackInfoMapper, TrackInfo
                 List<UserPaidTrack> userPaidTrackList = userPaidTracksRes.getData();
                 if (!CollectionUtils.isEmpty(userPaidTrackList)) {
                     // 获取订阅过的声音ids
-                    List<Long> paidTrackIds = userPaidTrackList.stream().map(UserPaidTrack::getTrackId).toList();
+                    Set<Long> paidTrackIds = userPaidTrackList.stream().map(UserPaidTrack::getTrackId).collect(Collectors.toSet());
                     needPayTracks.forEach(track -> {
                         // 如果订购过得声音列表中不包含当前声音，则显示付费标识
                         if (!paidTrackIds.contains(track.getTrackId())) {

@@ -21,5 +21,41 @@
         update_time,
         is_deleted
     </sql>
+
+    <select id="check" resultMap="userAccountMap">
+        select
+        <include refid="columns"/>
+        from user_account
+        where user_id = #{userId} and available_amount >= #{amount}
+        and is_deleted = 0 for update
+    </select>
+
+    <update id="lock">
+        update user_account
+        set
+        available_amount = available_amount - #{amount},
+        lock_amount = lock_amount + #{amount}
+        where user_id = #{userId} and available_amount >= #{amount}
+        and is_deleted = 0
+    </update>
+
+    <update id="minus">
+        update user_account
+        set
+        total_amount = total_amount - #{amount},
+        lock_amount = lock_amount - #{amount},
+        total_pay_amount = total_pay_amount + #{amount}
+        where user_id = #{userId} and available_amount >= #{amount}
+        and is_deleted = 0
+    </update>
+
+    <update id="unlock">
+        update user_account
+        set
+        available_amount = available_amount + #{amount},
+        lock_amount = lock_amount - #{amount}
+        where user_id = #{userId} and available_amount >= #{amount}
+        and is_deleted = 0
+    </update>
 </mapper>
 
