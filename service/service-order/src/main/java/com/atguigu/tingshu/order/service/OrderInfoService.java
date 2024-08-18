@@ -45,4 +45,12 @@ public interface OrderInfoService extends IService<OrderInfo> {
      * @return 订单列表
      */
     IPage<OrderInfo> findUserPage(Integer pageNum, Integer pageSize);
+
+    /**
+     * 取消订单
+     *
+     * @param orderNo 订单号
+     */
+    void cancelOrder(String orderNo);
+
 }

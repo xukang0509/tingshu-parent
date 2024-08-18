@@ -57,4 +57,28 @@ public class OrderReceiver {
             }
         }
     }
+
+    /**
+     * 定时取消订单
+     */
+    @SneakyThrows
+    @RabbitListener(queues = RabbitMqConstant.QUEUE_CANCEL_ORDER)
+    public void cancelOrder(String orderNo, Message message, Channel channel) {
+        if (StringUtils.isBlank(orderNo)) {
+            channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
+            return;
+        }
+        try {
+            this.orderInfoService.cancelOrder(orderNo);
+            channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
+        } catch (Exception e) {
+            if (!message.getMessageProperties().getRedelivered()) {
+                // 消息已重复处理,拒绝再次接收
+                channel.basicReject(message.getMessageProperties().getDeliveryTag(), false);
+            } else {
+                // 该消息不是重复的
+                channel.basicNack(message.getMessageProperties().getDeliveryTag(), false, true);
+            }
+        }
+    }
 }

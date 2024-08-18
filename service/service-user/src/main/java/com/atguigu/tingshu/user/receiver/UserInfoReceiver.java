@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Slf4j
-public class UserPaidRecordReceiver {
+public class UserInfoReceiver {
     @Resource
     private UserInfoService userInfoService;
 
@@ -49,7 +49,9 @@ public class UserPaidRecordReceiver {
         }
         try {
             UserPaidRecordVo userPaidRecordVo = JSON.parseObject(userPaidRecordVoStr, UserPaidRecordVo.class);
-            this.userInfoService.updateUserPayRecord(userPaidRecordVo);
+            if (userPaidRecordVo != null) {
+                this.userInfoService.updateUserPayRecord(userPaidRecordVo);
+            }
             channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
         } catch (Exception e) {
             if (!message.getMessageProperties().getRedelivered()) {

@@ -20,6 +20,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import io.seata.spring.annotation.GlobalTransactional;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.springframework.beans.BeanUtils;
@@ -109,7 +110,14 @@ public class UserInfoServiceImpl extends ServiceImpl<UserInfoMapper, UserInfo> i
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void updateUserPayRecord(UserPaidRecordVo userPaidRecordVo) {
+        Long userId = userPaidRecordVo.getUserId();
+        String orderNo = userPaidRecordVo.getOrderNo();
+        List<Long> itemIdList = userPaidRecordVo.getItemIdList();
         String itemType = userPaidRecordVo.getItemType();
+        if (userId == null || StringUtils.isEmpty(orderNo) ||
+                StringUtils.isEmpty(itemType) || CollectionUtils.isEmpty(itemIdList)) {
+            return;
+        }
 
         if (SystemConstant.ORDER_ITEM_TYPE_VIP.equals(itemType)) {
             // 更新用户购买vip消费记录
@@ -174,7 +182,10 @@ public class UserInfoServiceImpl extends ServiceImpl<UserInfoMapper, UserInfo> i
         Long count = this.userPaidAlbumMapper.selectCount(Wrappers.lambdaQuery(UserPaidAlbum.class)
                 .eq(UserPaidAlbum::getOrderNo, orderNo)
                 .eq(UserPaidAlbum::getUserId, userId));
-        if (count > 0) return;
+        if (count > 0) {
+            // TODO：发送消息走退款流程并把订单设置为无效订单
+            return;
+        }
 
         // 新增用户专辑购买记录
         UserPaidAlbum userPaidAlbum = new UserPaidAlbum();

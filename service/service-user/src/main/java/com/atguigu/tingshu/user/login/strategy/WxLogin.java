@@ -18,10 +18,7 @@ import me.chanjar.weixin.common.error.WxErrorException;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @TSLogin
@@ -62,6 +59,8 @@ public class WxLogin implements LoginStrategy {
                 userInfo.setNickname("听友" + System.currentTimeMillis());
                 userInfo.setAvatarUrl("http://192.168.10.103:9000/sph/6c0aa1b2fc2f49bda7107b1341102823.jpg");
                 userInfo.setStatus("1");
+                userInfo.setIsVip(0);
+                userInfo.setVipExpireTime(new Date());
                 this.userInfoMapper.insert(userInfo);
                 // 初始化账号信息
                 userAccountFeignClient.saveUserAccount(userInfo.getId());

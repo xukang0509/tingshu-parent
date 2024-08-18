@@ -17,6 +17,7 @@ import com.atguigu.tingshu.model.account.UserAccountDetail;
 import com.atguigu.tingshu.vo.account.AccountLockResultVo;
 import com.atguigu.tingshu.vo.account.AccountLockVo;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import io.seata.common.util.StringUtils;
 import jakarta.annotation.Resource;
@@ -110,6 +111,9 @@ public class UserAccountServiceImpl extends ServiceImpl<UserAccountMapper, UserA
         BeanUtils.copyProperties(accountLockVo, accountLockResultVo);
         this.redisTemplate.opsForValue().set(dataKey, JSON.toJSONString(accountLockResultVo));
 
+        // MQ发送消息，定时90秒后自动解锁库存
+        this.rabbitService.sendMessage(RabbitMqConstant.EXCHANGE_ACCOUNT, RabbitMqConstant.ROUTING_ACCOUNT_UNLOCK_DEAD, orderNo);
+
         return Result.ok(accountLockResultVo);
     }
 
@@ -139,11 +143,11 @@ public class UserAccountServiceImpl extends ServiceImpl<UserAccountMapper, UserA
         BeanUtils.copyProperties(accountLockResultVo, accountLockVo);
         accountLockVo.setOrderNo(orderNo);
         this.saveAccountDetail(accountLockVo, SystemConstant.ACCOUNT_TRADE_TYPE_MINUS, "账户扣减余额：");
+        // 扣减账户金额之后，删除锁定缓存。以防止重复扣减
+        this.redisTemplate.delete(dataKey);
         // 发送消息给order更新订单状态
         this.rabbitService.sendMessage(RabbitMqConstant.EXCHANGE_ORDER_PAY_SUCCESS,
                 RabbitMqConstant.ROUTING_ORDER_PAY_SUCCESS, orderNo);
-        // 扣减账户金额之后，删除锁定缓存。以防止重复扣减
-        this.redisTemplate.delete(dataKey);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -182,5 +186,14 @@ public class UserAccountServiceImpl extends ServiceImpl<UserAccountMapper, UserA
         userAccountDetail.setTitle(prefix + accountLockVo.getContent());
         userAccountDetail.setTradeType(tradeType);
         this.userAccountDetailMapper.insert(userAccountDetail);
+    }
+
+    @Override
+    public Page<UserAccountDetail> getUserAccountDetailPage(Integer pageNum, Integer pageSize, String tradeType) {
+        return this.userAccountDetailMapper.selectPage(new Page<>(pageNum, pageSize),
+                Wrappers.lambdaQuery(UserAccountDetail.class)
+                        .eq(UserAccountDetail::getUserId, AuthContextHolder.getUserId())
+                        .eq(UserAccountDetail::getTradeType, tradeType)
+                        .orderByDesc(UserAccountDetail::getId));
     }
 }

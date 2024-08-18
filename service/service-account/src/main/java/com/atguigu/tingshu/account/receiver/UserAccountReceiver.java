@@ -25,7 +25,7 @@ public class UserAccountReceiver {
     private UserAccountService userAccountService;
 
     /**
-     * 账户余额支付成功：发送消息扣键余额
+     * 账户余额支付成功：发送消息扣减余额
      */
     @SneakyThrows
     @RabbitListener(
@@ -41,7 +41,7 @@ public class UserAccountReceiver {
             return;
         }
         try {
-            // 扣键余额
+            // 扣减余额
             this.userAccountService.minus(orderNo);
             channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
         } catch (Exception e) {

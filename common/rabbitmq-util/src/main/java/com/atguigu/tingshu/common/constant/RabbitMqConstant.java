@@ -51,21 +51,31 @@ public class RabbitMqConstant {
     public static final String QUEUE_USER_PAY_RECORD = "tingshu.user.pay.record";
     public static final String ROUTING_USER_PAY_RECORD = "tingshu.user.pay.record";
 
+    /**
+     * 延迟队列(死信队列实现)---定时取消订单
+     */
+    public static final String EXCHANGE_ORDER = "tingshu.order";
+    public static final String QUEUE_ORDER_DEAD = "tingshu.order.dead";
+    public static final String ROUTING_ORDER_DEAD = "tingshu.order.dead";
+
+    /**
+     * 取消订单
+     */
+    public static final String QUEUE_CANCEL_ORDER = "tingshu.order.cancel";
+    public static final String ROUTING_CANCEL_ORDER = "tingshu.order.cancel";
+
+    /**
+     * 延迟队列(死信队列实现)---定时解锁余额
+     */
+    public static final String EXCHANGE_ACCOUNT = "tingshu.account";
+    public static final String QUEUE_ACCOUNT_UNLOCK_DEAD = "tingshu.account.unlock.dead";
+    public static final String ROUTING_ACCOUNT_UNLOCK_DEAD = "tingshu.account.unlock.dead";
 
     /*==============================================================================*/
 
     public static final String QUEUE_ALBUM_STAT_UPDATE = "tingshu.album.stat.update";
     public static final String QUEUE_ALBUM_ES_STAT_UPDATE = "tingshu.album.es.stat.update";
     public static final String QUEUE_ALBUM_RANKING_UPDATE = "tingshu.album.ranking.update";
-
-    /**
-     * 取消订单
-     */
-    //延迟取消订单队列
-    public static final String QUEUE_ORDER_CANCEL = "tingshu.queue.order.cancel";
-    //取消订单 延迟时间 单位：秒
-    public static final int DELAY_TIME = 5 * 60;
-
     /**
      * 支付
      */
