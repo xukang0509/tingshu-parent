@@ -64,12 +64,12 @@ public class TingShuCacheAspect {
             this.redisTemplate.opsForValue().set(key, res,
                     tingShuCache.timeout() + new Random().nextLong(tingShuCache.random()),
                     TimeUnit.SECONDS);
+            return res;
         } catch (Throwable e) {
             throw new RuntimeException(e);
         } finally {
             // 释放锁
             lock.unlock();
         }
-        return res;
     }
 }

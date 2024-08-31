@@ -8,7 +8,6 @@ import com.atguigu.tingshu.vo.user.UserInfoVo;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.SneakyThrows;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -28,7 +27,6 @@ public class AuthLoginAspect {
     /**
      * 身份认证环绕通知
      */
-    @SneakyThrows
     @Around("execution(* com.atguigu.tingshu.*.api.*.*(..)) && @annotation(authLogin)")
     public Object loginAspect(ProceedingJoinPoint joinPoint, AuthLogin authLogin) {
         // 不管需不需要强制登录，但是都有可能需要用户信息
@@ -55,6 +53,8 @@ public class AuthLoginAspect {
             }
             // 执行目标方法
             return joinPoint.proceed();
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
         } finally {
             if (!Objects.isNull(userInfoVo)) {
                 // 方法执行完毕后，清除当前线程 用户信息 缓存(防止内存泄漏)

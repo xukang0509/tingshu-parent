@@ -229,9 +229,9 @@ public class TrackInfoServiceImpl extends ServiceImpl<TrackInfoMapper, TrackInfo
         }
 
         // 3.4 如果是vip免费
+        // 获取登录状态，判断用户是否登录
+        Long userId = AuthContextHolder.getUserId();
         if (SystemConstant.ALBUM_PAY_TYPE_VIPFREE.equals(payType)) {
-            // 获取登录状态，判断用户是否登录
-            Long userId = AuthContextHolder.getUserId();
             if (userId == null) {
                 // 如果未登录则需要显示付费标识
                 isNeedPay = true;
