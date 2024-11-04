@@ -45,7 +45,7 @@
         total_amount = total_amount - #{amount},
         lock_amount = lock_amount - #{amount},
         total_pay_amount = total_pay_amount + #{amount}
-        where user_id = #{userId} and available_amount >= #{amount}
+        where user_id = #{userId} and lock_amount >= #{amount}
         and is_deleted = 0
     </update>
 
@@ -54,7 +54,7 @@
         set
         available_amount = available_amount + #{amount},
         lock_amount = lock_amount - #{amount}
-        where user_id = #{userId} and available_amount >= #{amount}
+        where user_id = #{userId} and lock_amount >= #{amount}
         and is_deleted = 0
     </update>
 </mapper>
