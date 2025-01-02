@@ -26,7 +26,7 @@ import java.util.Arrays;
  * @author xk
  * @since 2024-08-18 15:56
  */
-@ConfirmTradeBean(value = SystemConstant.ORDER_ITEM_TYPE_ALBUM)
+@ConfirmTradeBean
 public class AlbumTradeConfirm extends ConfirmTradeTemplate {
     @Resource
     private UserInfoFeignClient userInfoFeignClient;

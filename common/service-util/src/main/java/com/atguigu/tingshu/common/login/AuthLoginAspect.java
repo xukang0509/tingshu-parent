@@ -17,12 +17,13 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 @Aspect
 @Component
 public class AuthLoginAspect {
     @Resource
-    private RedisTemplate redisTemplate;
+    private RedisTemplate<String, Object> redisTemplate;
 
     /**
      * 身份认证环绕通知
@@ -40,11 +41,22 @@ public class AuthLoginAspect {
             String token = request.getHeader("token");
             if (StringUtils.isNotBlank(token)) {
                 // 如果token不为空，从缓存中获取数据
-                userInfoVo = (UserInfoVo) redisTemplate.opsForValue().get(RedisConstant.USER_LOGIN_KEY_PREFIX + token);
+                final String tokenKey = RedisConstant.USER_LOGIN_KEY_PREFIX + token;
+                userInfoVo = (UserInfoVo) redisTemplate.opsForValue().get(tokenKey);
                 if (!Objects.isNull(userInfoVo)) {
                     // 将用户信息存储到请求头中
                     AuthContextHolder.setUserId(userInfoVo.getId());
                     AuthContextHolder.setUsername(userInfoVo.getNickname());
+
+                    // 自动续期
+                    final UserInfoVo tmpUserInfoVo = userInfoVo;
+                    new Thread(() -> {
+                        final Long expire = this.redisTemplate.getExpire(tokenKey, TimeUnit.SECONDS);
+                        if (expire != null && expire <= (double) RedisConstant.USER_LOGIN_KEY_TIMEOUT / 3) {
+                            this.redisTemplate.opsForValue().set(tokenKey, tmpUserInfoVo,
+                                    RedisConstant.USER_LOGIN_KEY_TIMEOUT, TimeUnit.SECONDS);
+                        }
+                    }).start();
                 }
             }
             // 如果需要登录，而用户又没有登录，则抛出异常去登录

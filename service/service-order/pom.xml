@@ -46,7 +46,7 @@
     </build>
 
     <repositories>
-        <!-- 下载mybatis-plus SNAPSHOT 版本所需仓库 -->
+        <!-- 下载 SNAPSHOT 版本所需仓库 -->
         <repository>
             <id>ossrh</id>
             <name>OSS Snapshot repository</name>
